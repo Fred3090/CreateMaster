@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nano Banana Pro · Art Edition</title>
+<style>
+  :root {
+    --primary: #007aff;
+    --primary-hover: #0056b3;
+    --primary-light: #e8f0fe;
+    --bg: #f5f5f7;
+    --card-bg: #ffffff;
+    --text: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    --success: #34c759;
+    --danger: #ff3b30;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 10px;
+    --radius-sm: 8px;
+    --radius-lg: 14px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c1c1c6; border-radius: 3px; }
+
+  /* Layout */
+  .app-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    position: relative;
+  }
+
+  .main-area {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), #00d2ff);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    font-weight: bold;
+  }
+
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .header-title span {
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .header-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* Section labels */
+  .section-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* Model Selector */
+  .model-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .model-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+    flex: 1 0 auto;
+  }
+
+  .model-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  .model-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+
+  .model-btn .model-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .model-btn .model-cost {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Aspect Ratio Selector */
+  .ratio-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .ratio-btn {
+    padding: 6px 14px;
+    border: 1.5px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 48px;
+    text-align: center;
+  }
+
+  .ratio-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .ratio-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  /* Resolution Selector */
+  .resolution-grid {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .resolution-btn {
+    padding: 8px 20px;
+    border: 1.5px solid var(--border-light);
+    border-radius: 20px;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .resolution-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .resolution-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+    font-weight: 500;
+  }
+
+  /* Prompt Input */
+  .prompt-area {
+    margin-bottom: 16px;
+  }
+
+  .prompt-area textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  .prompt-area textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+  }
+
+  .prompt-area textarea::placeholder {
+    color: var(--text-secondary);
+  }
+
+  /* Image Upload */
+  .upload-area {
+    margin-bottom: 16px;
+  }
+
+  .upload-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .upload-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .upload-preview {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .upload-preview-item {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+  }
+
+  .upload-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .upload-preview-item .remove-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* API Key Row */
+  .key-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .key-row .section-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .key-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+  }
+
+  .key-input:focus {
+    border-color: var(--primary);
+  }
+
+  .key-input::placeholder {
+    color: var(--text-secondary);
+    font-family: var(--font);
+  }
+
+  .btn {
+    padding: 7px 14px;
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 600;
+    padding: 8px 16px;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: white;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-danger {
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+
+  .btn-danger:hover {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-small {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  /* Generate Button */
+  .generate-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn-generate {
+    flex: 1;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary), #00d2ff);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-generate:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,122,255,0.35);
+  }
+
+  .btn-generate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-generate.generating {
+    background: linear-gradient(135deg, #666, #888);
+  }
+
+  /* Status / Result */
+  .result-area {
+    margin-top: 16px;
+  }
+
+  .result-image-container {
+    position: relative;
+    width: 100%;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #f0f0f0;
+    display: none;
+  }
+
+  .result-image-container img {
+    width: 100%;
+    display: block;
+  }
+
+  .result-image-container .result-actions {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .result-image-container .result-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    text-decoration: none;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+  }
+
+  .result-image-container .result-actions a:hover {
+    background: rgba(0,0,0,0.8);
+  }
+
+  /* Loading */
+  .loading-indicator {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .loading-indicator .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-light);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-indicator .status-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Status message */
+  .status-msg {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .status-msg.error {
+    display: block;
+    background: #fff0f0;
+    color: var(--danger);
+    border: 1px solid #ffd0d0;
+  }
+
+  .status-msg.success {
+    display: block;
+    background: #f0fff4;
+    color: #1a7d3a;
+    border: 1px solid #b8e6c8;
+  }
+
+  /* ============ History Panel ============ */
+  .history-panel {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .history-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .history-header .clear-btn {
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .history-header .clear-btn:hover {
+    background: #fff0f0;
+    color: var(--danger);
+  }
+
+  .history-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .history-item {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    aspect-ratio: 1;
+    background: #f5f5f7;
+  }
+
+  .history-item:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+
+  .history-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .history-item .history-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    line-height: 1;
+    z-index: 2;
+  }
+
+  .history-item:hover .history-delete {
+    opacity: 1;
+  }
+
+  .history-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-light);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .history-pagination button {
+    padding: 4px 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+
+  .history-pagination button:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .history-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .history-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  /* ============ Preview Modal ============ */
+  .preview-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview-modal.show {
+    display: flex;
+  }
+
+  .preview-modal .preview-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    z-index: 10;
+  }
+
+  .preview-modal .preview-close:hover {
+    background: rgba(255,255,255,0.3);
+  }
+
+  .preview-modal .preview-content {
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .preview-modal .preview-content img {
+    max-width: 90vw;
+    max-height: 75vh;
+    border-radius: 8px;
+    object-fit: contain;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .preview-modal .preview-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .preview-modal .preview-nav button {
+    padding: 8px 18px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+
+  .preview-modal .preview-nav button:hover {
+    background: rgba(255,255,255,0.25);
+  }
+
+  .preview-modal .preview-nav a {
+    padding: 8px 18px;
+    background: var(--primary);
+    border-radius: 6px;
+    color: white;
+    text-decoration: none;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+
+  .preview-modal .preview-nav a:hover {
+    background: var(--primary-hover);
+  }
+
+  /* ============ Responsive ============ */
+  @media (max-width: 820px) {
+    .app-container {
+      grid-template-columns: 1fr;
+    }
+
+    .history-panel {
+      position: static;
+      max-height: none;
+    }
+
+    .history-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      padding: 8px;
+    }
+
+    .main-area {
+      padding: 16px;
+    }
+
+    .model-btn {
+      flex: 1 1 calc(50% - 4px);
+      min-width: 0;
+    }
+
+    .ratio-btn {
+      min-width: 40px;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .history-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .key-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .key-input {
+      min-width: 0;
+    }
+
+    .header-title {
+      font-size: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Main Area -->
+  <div class="main-area">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-area">
+        <div class="logo-icon">N</div>
+        <div>
+          <div class="header-title">Nano Banana Pro <span>· Art Edition</span></div>
+        </div>
+      </div>
+      <div class="header-info">
+        作者微信：wxid_n5a0t7taezpk22
+      </div>
+    </div>
+
+    <!-- Model Selection -->
+    <div>
+      <span class="section-label">模型</span>
+      <div class="model-grid" id="modelGrid">
+        <button class="model-btn active" data-model="nano-banana-pro" data-cost="180">
+          <span class="model-name">Banana Pro</span>
+          <span class="model-cost">每次180积分</span>
+        </button>
+        <button class="model-btn" data-model="gpt-image-2-vip" data-cost="60">
+          <span class="model-name">GPT Image 2 VIP</span>
+          <span class="model-cost">每次60积分</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Aspect Ratio -->
+    <div>
+      <span class="section-label">画幅比例</span>
+      <div class="ratio-grid" id="ratioGrid">
+        <button class="ratio-btn" data-ratio="auto">自动</button>
+        <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+        <button class="ratio-btn" data-ratio="16:9">16:9</button>
+        <button class="ratio-btn" data-ratio="9:16">9:16</button>
+        <button class="ratio-btn" data-ratio="4:3">4:3</button>
+        <button class="ratio-btn" data-ratio="3:4">3:4</button>
+        <button class="ratio-btn" data-ratio="3:2">3:2</button>
+        <button class="ratio-btn" data-ratio="2:3">2:3</button>
+        <button class="ratio-btn" data-ratio="5:4">5:4</button>
+        <button class="ratio-btn" data-ratio="4:5">4:5</button>
+        <button class="ratio-btn" data-ratio="21:9">21:9</button>
+      </div>
+      <div id="pixelInfo" style="font-size:12px;color:var(--text-secondary);margin-top:4px;display:none;"></div>
+    </div>
+
+    <!-- Resolution -->
+    <div>
+      <span class="section-label">分辨率</span>
+      <div class="resolution-grid" id="resolutionGrid">
+        <button class="resolution-btn active" data-size="1K">1K 标准</button>
+        <button class="resolution-btn" data-size="2K">2K 高清</button>
+        <button class="resolution-btn" data-size="4K">4K 超清</button>
+      </div>
+    </div>
+
+    <!-- Prompt -->
+    <div class="prompt-area">
+      <span class="section-label">创意描述 (Prompt)</span>
+      <textarea id="promptInput" placeholder="输入您的创意描述..."></textarea>
+    </div>
+
+    <!-- Image Upload -->
+    <div class="upload-area">
+      <span class="section-label">参考图片（可选）</span>
+      <div class="upload-container">
+        <label class="upload-btn">
+          <span>📁</span> 上传图片
+          <input type="file" id="imageUpload" accept="image/*" multiple style="display:none">
+        </label>
+        <div class="upload-preview" id="uploadPreview"></div>
+      </div>
+    </div>
+
+    <!-- API Key -->
+    <div class="key-row">
+      <span class="section-label">API Key</span>
+      <input type="password" class="key-input" id="apiKeyInput" placeholder="输入您的 API Key..." value="sk-c5addffcab314df497c59bd3b7cd459a">
+      <button class="btn" id="saveKeyBtn">💾 保存</button>
+      <button class="btn" id="queryBalanceBtn">🔍 查询剩余</button>
+    </div>
+
+    <!-- Generate Button -->
+    <div class="generate-row">
+      <button class="btn-generate" id="generateBtn">✨ 生成</button>
+    </div>
+
+    <!-- Status messages -->
+    <div class="status-msg error" id="errorMsg"></div>
+    <div class="status-msg success" id="successMsg"></div>
+
+    <!-- Loading -->
+    <div class="loading-indicator" id="loadingIndicator">
+      <div class="spinner"></div>
+      <div class="status-text" id="loadingText">正在生成中，请稍候...</div>
+    </div>
+
+    <!-- Result Image -->
+    <div class="result-area">
+      <div class="result-image-container" id="resultContainer">
+        <img id="resultImage" src="" alt="生成结果">
+        <div class="result-actions">
+          <a id="downloadBtn" href="#" download="generated.png">↓ 下载</a>
+          <a id="openBtn" href="#" target="_blank">↗ 打开</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Panel -->
+  <div class="history-panel">
+    <div class="history-header">
+      <h3>📋 历史</h3>
+      <button class="clear-btn" id="clearHistoryBtn">清空</button>
+    </div>
+    <div class="history-grid" id="historyGrid"></div>
+    <div class="history-pagination">
+      <button id="prevPageBtn">← 上一页</button>
+      <span id="pageInfo">第 1 页 / 共 1 页</span>
+      <button id="nextPageBtn">下一页 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="preview-modal" id="previewModal">
+  <button class="preview-close" id="previewClose">✕</button>
+  <div class="preview-content">
+    <img id="previewImage" src="" alt="预览">
+    <div class="preview-nav">
+      <button id="prevImageBtn">← 前一张</button>
+      <a id="downloadPreviewBtn" href="#" download>↓ 下载原图</a>
+      <button id="nextImageBtn">后一张 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============= Configuration =============
+// API 接口文档：https://qmy27nhsd9.apifox.cn/
+// 直接调用 API（通过本地服务器打开可解决 CORS）
+const API_GENERATE = 'https://grsai.dakka.com.cn/v1/api/generate';
+const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
+
+const STORAGE_KEY_KEY = 'nanobanana_api_key';
+const STORAGE_KEY_HISTORY = 'nanobanana_history';
+
+// ============= 4K 像素尺寸计算（原版网站算法） =============
+// gpt-image-2-vip 模型不支持比例字符串，需使用 compute4KSize 转为像素值
+function compute4KSize(ratioStr) {
+  if (!ratioStr || typeof ratioStr !== 'string' || !ratioStr.includes(':')) return '3840x3840';
+  const parts = ratioStr.split(':');
+  const a = parseFloat(parts[0]);
+  const b = parseFloat(parts[1]);
+  if (!(a > 0) || !(b > 0)) return '3840x3840';
+
+  const MAX_EDGE = 3840;
+  const STEP = 16;
+  const MAX_RATIO = 3;
+  const MIN_PIXELS = 655360;
+  const MAX_PIXELS = 8294400;
+
+  const landscape = a >= b;
+  const lr = Math.max(a, b);
+  const sr = Math.min(a, b);
+  const r = Math.min(lr / sr, MAX_RATIO);
+
+  let longE = Math.min(MAX_EDGE, Math.floor(Math.sqrt(MAX_PIXELS * r)));
+  let shortE = longE / r;
+  longE = Math.floor(longE / STEP) * STEP;
+  shortE = Math.floor(shortE / STEP) * STEP;
+  if (longE < STEP) longE = STEP;
+  if (shortE < STEP) shortE = STEP;
+
+  let maxIter = 50;
+  while (longE * shortE < MIN_PIXELS && maxIter-- > 0) {
+    let bumped = false;
+    if (longE + STEP <= MAX_EDGE && (longE + STEP) * shortE <= MAX_PIXELS) {
+      longE += STEP;
+      bumped = true;
+    } else if (shortE + STEP <= longE && longE * (shortE + STEP) <= MAX_PIXELS) {
+      shortE += STEP;
+      bumped = true;
+    }
+    if (!bumped) break;
+  }
+
+  maxIter = 50;
+  while (longE * shortE > MAX_PIXELS && maxIter-- > 0) {
+    if (longE >= shortE) longE -= STEP; else shortE -= STEP;
+    if (longE < STEP || shortE < STEP) break;
+  }
+
+  maxIter = 50;
+  while (longE / shortE > MAX_RATIO && maxIter-- > 0) {
+    longE -= STEP;
+    if (longE < STEP) break;
+  }
+
+  const W = landscape ? longE : shortE;
+  const H = landscape ? shortE : longE;
+  return `${W}x${H}`;
+}
+
+// ============= State =============
+let state = {
+  model: 'nano-banana-pro',
+  aspectRatio: '1:1',
+  imageSize: '1K',
+  prompt: '',
+  images: [],
+  imageBase64List: [],
+  apiKey: localStorage.getItem(STORAGE_KEY_KEY) || 'sk-c5addffcab314df497c59bd3b7cd459a',
+  history: JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]'),
+  currentPage: 1,
+  pageSize: 12,
+  isGenerating: false,
+  previewIndex: -1,
+};
+
+// ============= DOM Refs =============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const modelGrid = $('#modelGrid');
+const ratioGrid = $('#ratioGrid');
+const resolutionGrid = $('#resolutionGrid');
+const promptInput = $('#promptInput');
+const apiKeyInput = $('#apiKeyInput');
+const imageUpload = $('#imageUpload');
+const uploadPreview = $('#uploadPreview');
+const generateBtn = $('#generateBtn');
+const errorMsg = $('#errorMsg');
+const successMsg = $('#successMsg');
+const loadingIndicator = $('#loadingIndicator');
+const loadingText = $('#loadingText');
+const resultContainer = $('#resultContainer');
+const resultImage = $('#resultImage');
+const downloadBtn = $('#downloadBtn');
+const openBtn = $('#openBtn');
+const historyGrid = $('#historyGrid');
+const pageInfo = $('#pageInfo');
+const prevPageBtn = $('#prevPageBtn');
+const nextPageBtn = $('#nextPageBtn');
+const clearHistoryBtn = $('#clearHistoryBtn');
+const previewModal = $('#previewModal');
+const previewImage = $('#previewImage');
+const previewClose = $('#previewClose');
+const prevImageBtn = $('#prevImageBtn');
+const nextImageBtn = $('#nextImageBtn');
+const downloadPreviewBtn = $('#downloadPreviewBtn');
+const saveKeyBtn = $('#saveKeyBtn');
+const queryBalanceBtn = $('#queryBalanceBtn');
+const pixelInfo = $('#pixelInfo');
+
+// ============= Init =============
+apiKeyInput.value = state.apiKey;
+updatePixelInfo();
+updateResolutionLock();
+
+// ============= Pixel Info Update =============
+function updatePixelInfo() {
+  const isGptVip = state.model === 'gpt-image-2-vip';
+  if (isGptVip) {
+    const pixelDim = compute4KSize(state.aspectRatio);
+    pixelInfo.textContent = `→ 该模型使用 4K 像素：${pixelDim}（由 ${state.aspectRatio} 换算，最长边 ≤ 3840px）`;
+    pixelInfo.style.display = 'block';
+  } else {
+    pixelInfo.style.display = 'none';
+  }
+}
+
+// ============= Resolution Auto-Lock =============
+function updateResolutionLock() {
+  const isGptVip = state.model === 'gpt-image-2-vip';
+  resolutionGrid.querySelectorAll('.resolution-btn').forEach((btn, idx) => {
+    // VIP 强制 4K：选中 4K 按钮，禁用其他
+    if (isGptVip) {
+      if (btn.dataset.size === '4K') {
+        btn.classList.add('active');
+        state.imageSize = '4K';
+      } else {
+        btn.classList.remove('active');
+      }
+      btn.style.opacity = btn.dataset.size === '4K' ? '1' : '0.35';
+      btn.style.cursor = btn.dataset.size === '4K' ? 'default' : 'not-allowed';
+      btn.style.pointerEvents = btn.dataset.size === '4K' ? 'auto' : 'none';
+    } else {
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.style.pointerEvents = 'auto';
+    }
+  });
+}
+
+// ============= Model Selection =============
+modelGrid.addEventListener('click', (e) => {
+  const btn = e.target.closest('.model-btn');
+  if (!btn) return;
+  modelGrid.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.model = btn.dataset.model;
+  updatePixelInfo();
+  updateResolutionLock();
+});
+
+// ============= Aspect Ratio =============
+ratioGrid.addEventListener('click', (e) => {
+  const btn = e.target.closest('.ratio-btn');
+  if (!btn) return;
+  ratioGrid.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.aspectRatio = btn.dataset.ratio;
+  updatePixelInfo();
+});
+
+// ============= Resolution =============
+resolutionGrid.addEventListener('click', (e) => {
+  const btn = e.target.closest('.resolution-btn');
+  if (!btn) return;
+  resolutionGrid.querySelectorAll('.resolution-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.imageSize = btn.dataset.size;
+  updatePixelInfo();
+});
+
+// ============= Prompt =============
+promptInput.addEventListener('input', () => {
+  state.prompt = promptInput.value;
+});
+
+// ============= Image Upload =============
+imageUpload.addEventListener('change', async (e) => {
+  const files = e.target.files;
+  if (!files.length) return;
+
+  for (const file of files) {
+    if (state.images.length >= 4) {
+      showError('最多上传4张参考图片');
+      break;
+    }
+    const base64 = await fileToBase64(file);
+    state.images.push({ file, url: URL.createObjectURL(file), base64 });
+    state.imageBase64List.push(base64);
+  }
+
+  renderUploadPreview();
+  imageUpload.value = '';
+});
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderUploadPreview() {
+  uploadPreview.innerHTML = state.images.map((img, i) =>
+    `<div class="upload-preview-item">
+      <img src="${img.url}" alt="ref${i}">
+      <button class="remove-btn" data-index="${i}">✕</button>
+    </div>`
+  ).join('');
+}
+
+uploadPreview.addEventListener('click', (e) => {
+  const btn = e.target.closest('.remove-btn');
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.index);
+  URL.revokeObjectURL(state.images[idx].url);
+  state.images.splice(idx, 1);
+  state.imageBase64List.splice(idx, 1);
+  renderUploadPreview();
+});
+
+// ============= API Key =============
+saveKeyBtn.addEventListener('click', () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) {
+    showError('请输入 API Key');
+    return;
+  }
+  state.apiKey = key;
+  localStorage.setItem(STORAGE_KEY_KEY, key);
+  hideError();
+  showSuccess('API Key 已保存');
+  setTimeout(() => hideSuccess(), 2000);
+});
+
+queryBalanceBtn.addEventListener('click', async () => {
+  const key = apiKeyInput.value.trim() || state.apiKey;
+  if (!key) {
+    showError('请先输入 API Key');
+    return;
+  }
+
+  queryBalanceBtn.disabled = true;
+  queryBalanceBtn.textContent = '查询中...';
+
+  try {
+    // Try a simple generate call with a small prompt to check balance
+    // Actually, let's do a lightweight API call
+    // The API doesn't have a dedicated balance endpoint, so we'll
+    // just test the API key validity
+    const resp = await fetch(API_GENERATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: 'nano-banana-pro',
+        prompt: 'test',
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        replyType: 'json'
+      })
+    });
+
+    if (resp.ok) {
+      showSuccess('API Key 有效！(注：余额查询暂不支持，请前往 grsai.ai 查看)');
+    } else if (resp.status === 401) {
+      showError('API Key 无效，请检查');
+    } else {
+      const data = await resp.json();
+      showSuccess(`API 连接正常 (${data.status || 'ok'})`);
+    }
+  } catch (err) {
+    showError('API 连接失败：' + err.message);
+  } finally {
+    queryBalanceBtn.disabled = false;
+    queryBalanceBtn.textContent = '🔍 查询剩余';
+    setTimeout(() => { hideError(); hideSuccess(); }, 3000);
+  }
+});
+
+// ============= Generate =============
+generateBtn.addEventListener('click', generateImage);
+
+async function generateImage() {
+  if (state.isGenerating) return;
+
+  const key = apiKeyInput.value.trim() || state.apiKey;
+  if (!key) {
+    showError('请先输入 API Key');
+    return;
+  }
+
+  if (!state.prompt.trim()) {
+    showError('请输入创意描述');
+    return;
+  }
+
+  // Save key
+  state.apiKey = key;
+  localStorage.setItem(STORAGE_KEY_KEY, key);
+
+  state.isGenerating = true;
+  generateBtn.disabled = true;
+  generateBtn.textContent = '⏳ 生成中...';
+  generateBtn.classList.add('generating');
+  hideError();
+  hideSuccess();
+  resultContainer.style.display = 'none';
+  loadingIndicator.style.display = 'block';
+  loadingText.textContent = '正在提交任务...';
+
+  const isGptVip = state.model === 'gpt-image-2-vip';
+  const payload = {
+    model: state.model,
+    prompt: state.prompt,
+    replyType: 'json',
+  };
+
+  if (isGptVip) {
+    // gpt-image-2-vip: 传像素值代替比例字符串
+    const pixelDim = compute4KSize(state.aspectRatio);
+    payload.aspectRatio = pixelDim;
+  } else {
+    payload.aspectRatio = state.aspectRatio;
+    payload.imageSize = state.imageSize;
+  }
+
+  if (state.imageBase64List.length > 0) {
+    payload.images = state.imageBase64List;
+  }
+
+  try {
+    loadingText.textContent = '正在生成中，请稍候...';
+
+    const resp = await fetch(API_GENERATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data.error || `HTTP ${resp.status}`);
+    }
+
+    if (data.status === 'succeeded' && data.results && data.results.length > 0) {
+      // Direct success
+      const imageUrl = data.results[0].url;
+      showResult(imageUrl);
+      addToHistory(imageUrl);
+    } else if (data.status === 'running' || data.status === 'queued') {
+      // Async polling
+      await pollResult(data.id, key);
+    } else if (data.status === 'violation') {
+      showError('内容违规，请修改提示词后重试');
+    } else if (data.status === 'failed') {
+      showError(data.error || '生成失败');
+    } else {
+      showError('未知状态：' + (data.status || '无响应'));
+    }
+  } catch (err) {
+    showError('生成失败：' + err.message);
+  } finally {
+    state.isGenerating = false;
+    generateBtn.disabled = false;
+    generateBtn.textContent = '✨ 生成';
+    generateBtn.classList.remove('generating');
+    loadingIndicator.style.display = 'none';
+  }
+}
+
+async function pollResult(taskId, key) {
+  const maxAttempts = 60;
+  const interval = 3000;
+  let attempts = 0;
+
+  loadingText.textContent = '任务已提交，正在等待生成结果...';
+
+  while (attempts < maxAttempts) {
+    await sleep(interval);
+    attempts++;
+    loadingText.textContent = `正在生成中... (${attempts * 3}s)`;
+
+    try {
+      const resp = await fetch(`${API_RESULT}?id=${encodeURIComponent(taskId)}`, {
+        headers: {
+          'Authorization': `Bearer ${key}`
+        }
+      });
+
+      const data = await resp.json();
+
+      if (data.status === 'succeeded' && data.results && data.results.length > 0) {
+        const imageUrl = data.results[0].url;
+        showResult(imageUrl);
+        addToHistory(imageUrl);
+        return;
+      } else if (data.status === 'violation') {
+        showError('内容违规，请修改提示词后重试');
+        return;
+      } else if (data.status === 'failed') {
+        showError(data.error || '生成失败');
+        return;
+      }
+      // Otherwise still running, continue polling
+    } catch (err) {
+      // Continue polling on transient errors
+      console.warn('Poll attempt failed:', err.message);
+    }
+  }
+
+  showError('生成超时，请稍后查看历史记录');
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ============= Display Result =============
+function showResult(url) {
+  // Ensure URL is absolute
+  if (!url.startsWith('http')) {
+    url = 'https:' + url;
+  }
+
+  resultImage.src = url;
+  resultContainer.style.display = 'block';
+  downloadBtn.href = url;
+  openBtn.href = url;
+
+  // Scroll to result
+  resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ============= History =============
+function addToHistory(url) {
+  state.history.unshift({
+    url: url,
+    prompt: state.prompt,
+    model: state.model,
+    time: new Date().toISOString()
+  });
+
+  // Keep max 200 items
+  if (state.history.length > 200) {
+    state.history = state.history.slice(0, 200);
+  }
+
+  localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(state.history));
+  state.currentPage = 1;
+  renderHistory();
+}
+
+function renderHistory() {
+  const totalPages = Math.max(1, Math.ceil(state.history.length / state.pageSize));
+  const page = Math.min(state.currentPage, totalPages);
+  const start = (page - 1) * state.pageSize;
+  const end = start + state.pageSize;
+  const items = state.history.slice(start, end);
+
+  if (state.history.length === 0) {
+    historyGrid.innerHTML = '<div class="history-empty">暂无历史记录</div>';
+    pageInfo.textContent = '第 0 页 / 共 0 页';
+    prevPageBtn.disabled = true;
+    nextPageBtn.disabled = true;
+    return;
+  }
+
+  historyGrid.innerHTML = items.map((item, i) => {
+    const idx = start + i;
+    return `<div class="history-item" data-index="${idx}">
+      <img src="${item.url}" alt="生成图片" loading="lazy">
+      <button class="history-delete" data-index="${idx}">✕</button>
+    </div>`;
+  }).join('');
+
+  pageInfo.textContent = `第 ${page} 页 / 共 ${totalPages} 页`;
+  prevPageBtn.disabled = page <= 1;
+  nextPageBtn.disabled = page >= totalPages;
+}
+
+// History click - preview image
+historyGrid.addEventListener('click', (e) => {
+  const item = e.target.closest('.history-item');
+  const delBtn = e.target.closest('.history-delete');
+
+  if (delBtn) {
+    e.stopPropagation();
+    const idx = parseInt(delBtn.dataset.index);
+    state.history.splice(idx, 1);
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(state.history));
+    renderHistory();
+    return;
+  }
+
+  if (!item) return;
+  const idx = parseInt(item.dataset.index);
+  openPreview(idx);
+});
+
+// History pagination
+prevPageBtn.addEventListener('click', () => {
+  if (state.currentPage > 1) {
+    state.currentPage--;
+    renderHistory();
+  }
+});
+
+nextPageBtn.addEventListener('click', () => {
+  const totalPages = Math.ceil(state.history.length / state.pageSize);
+  if (state.currentPage < totalPages) {
+    state.currentPage++;
+    renderHistory();
+  }
+});
+
+clearHistoryBtn.addEventListener('click', () => {
+  if (state.history.length === 0) return;
+  if (confirm('确定要清空所有历史记录吗？')) {
+    state.history = [];
+    localStorage.setItem(STORAGE_KEY_HISTORY, '[]');
+    state.currentPage = 1;
+    renderHistory();
+  }
+});
+
+// ============= Preview Modal =============
+function openPreview(index) {
+  state.previewIndex = index;
+  updatePreview();
+  previewModal.classList.add('show');
+}
+
+function updatePreview() {
+  const item = state.history[state.previewIndex];
+  if (!item) return;
+
+  previewImage.src = item.url;
+  downloadPreviewBtn.href = item.url;
+
+  prevImageBtn.style.visibility = state.previewIndex > 0 ? 'visible' : 'hidden';
+  nextImageBtn.style.visibility = state.previewIndex < state.history.length - 1 ? 'visible' : 'hidden';
+}
+
+prevImageBtn.addEventListener('click', () => {
+  if (state.previewIndex > 0) {
+    state.previewIndex--;
+    updatePreview();
+  }
+});
+
+nextImageBtn.addEventListener('click', () => {
+  if (state.previewIndex < state.history.length - 1) {
+    state.previewIndex++;
+    updatePreview();
+  }
+});
+
+// Keyboard navigation in preview
+document.addEventListener('keydown', (e) => {
+  if (!previewModal.classList.contains('show')) return;
+
+  if (e.key === 'Escape') {
+    previewModal.classList.remove('show');
+  } else if (e.key === 'ArrowLeft') {
+    prevImageBtn.click();
+  } else if (e.key === 'ArrowRight') {
+    nextImageBtn.click();
+  }
+});
+
+previewClose.addEventListener('click', () => {
+  previewModal.classList.remove('show');
+});
+
+previewModal.addEventListener('click', (e) => {
+  if (e.target === previewModal) {
+    previewModal.classList.remove('show');
+  }
+});
+
+// ============= Status Helpers =============
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.style.display = 'block';
+  successMsg.style.display = 'none';
+}
+
+function hideError() {
+  errorMsg.style.display = 'none';
+}
+
+function showSuccess(msg) {
+  successMsg.textContent = msg;
+  successMsg.style.display = 'block';
+  errorMsg.style.display = 'none';
+}
+
+function hideSuccess() {
+  successMsg.style.display = 'none';
+}
+
+// ============= Init History =============
+renderHistory();
+</script>
+</body>
+</html>
