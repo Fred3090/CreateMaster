@@ -841,7 +841,7 @@
         </div>
       </div>
       <div class="header-info">
-        作者微信：wxid_n5a0t7taezpk22
+        作者微信：qingchuan7818
       </div>
     </div>
 
@@ -849,13 +849,13 @@
     <div>
       <span class="section-label">模型</span>
       <div class="model-grid" id="modelGrid">
-        <button class="model-btn active" data-model="nano-banana-pro" data-cost="180">
+        <button class="model-btn active" data-model="nano-banana-pro" data-cost="280">
           <span class="model-name">Banana Pro</span>
-          <span class="model-cost">每次180积分</span>
+          <span class="model-cost">每次280积分</span>
         </button>
-        <button class="model-btn" data-model="gpt-image-2-vip" data-cost="60">
+        <button class="model-btn" data-model="gpt-image-2-vip" data-cost="230">
           <span class="model-name">GPT Image 2 VIP</span>
-          <span class="model-cost">每次60积分</span>
+          <span class="model-cost">每次230积分</span>
         </button>
       </div>
     </div>
@@ -1234,41 +1234,31 @@ queryBalanceBtn.addEventListener('click', async () => {
 
   queryBalanceBtn.disabled = true;
   queryBalanceBtn.textContent = '查询中...';
+  hideError();
+  hideSuccess();
 
   try {
-    // Try a simple generate call with a small prompt to check balance
-    // Actually, let's do a lightweight API call
-    // The API doesn't have a dedicated balance endpoint, so we'll
-    // just test the API key validity
-    const resp = await fetch(API_GENERATE, {
+    // 调用积分查询接口（参考原网站实现）
+    const resp = await fetch('https://grsai.dakka.com.cn/client/openapi/getAPIKeyCredits', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`
-      },
-      body: JSON.stringify({
-        model: 'nano-banana-pro',
-        prompt: 'test',
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        replyType: 'json'
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
     });
+    const data = await resp.json();
 
-    if (resp.ok) {
-      showSuccess('API Key 有效！(注：余额查询暂不支持，请前往 grsai.ai 查看)');
-    } else if (resp.status === 401) {
-      showError('API Key 无效，请检查');
+    if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
+      const credits = data.data.credits;
+      const remainingPoints = credits / 10;
+      showSuccess(`剩余积分: ${remainingPoints}`);
     } else {
-      const data = await resp.json();
-      showSuccess(`API 连接正常 (${data.status || 'ok'})`);
+      showError('查询失败: ' + (data.msg || '未知错误'));
     }
   } catch (err) {
-    showError('API 连接失败：' + err.message);
+    showError('查询失败: ' + err.message);
   } finally {
     queryBalanceBtn.disabled = false;
     queryBalanceBtn.textContent = '🔍 查询剩余';
-    setTimeout(() => { hideError(); hideSuccess(); }, 3000);
+    setTimeout(() => { hideError(); hideSuccess(); }, 5000);
   }
 });
 
