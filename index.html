@@ -1249,9 +1249,15 @@ queryBalanceBtn.addEventListener('click', async () => {
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
       const credits = data.data.credits;
       const remainingPoints = credits / 10;
-      showSuccess(`剩余积分: ${remainingPoints}`);
+      if (remainingPoints > 0) {
+        showSuccess(`剩余积分: ${remainingPoints}`);
+      } else {
+        showSuccess(`剩余积分: 0（中转站需充值）`);
+      }
     } else {
-      showError('查询失败: ' + (data.msg || '未知错误'));
+      // 显示API返回的详细信息，便于排查
+      const detail = JSON.stringify(data).substring(0, 200);
+      showError('查询失败: ' + (data.msg || '未知错误') + ' | 返回: ' + detail);
     }
   } catch (err) {
     showError('查询失败: ' + err.message);
