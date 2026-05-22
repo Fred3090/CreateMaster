@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nano Banana Pro · AI 艺术生成</title>
+<title>创图大师 CreateMaster · AI 图像生成</title>
 <style>
   /* ========== Design System ========== */
   :root {
-    --bg-deep: #0a0a1a;
-    --bg-mid: #12122a;
-    --card-bg: rgba(255,255,255,0.04);
-    --card-border: rgba(255,255,255,0.08);
-    --card-glow: rgba(99,102,241,0.15);
-    --text: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --bg: #f0f4ff;
+    --bg-card: #ffffff;
+    --card-border: #e8edf5;
+    --card-shadow: rgba(99,102,241,0.08);
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
     --accent-1: #6366f1;
-    --accent-2: #8b5cf6;
+    --accent-2: #818cf8;
     --accent-3: #06b6d4;
-    --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+    --accent-gradient: linear-gradient(135deg, #6366f1, #818cf8, #06b6d4);
+    --accent-soft: #eef2ff;
     --success: #22c55e;
     --danger: #ef4444;
     --warning: #f59e0b;
@@ -26,37 +26,45 @@
     --radius: 12px;
     --radius-sm: 8px;
     --radius-lg: 20px;
-    --shadow-card: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
-    --shadow-glow: 0 0 30px rgba(99,102,241,0.2);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(99,102,241,0.08);
+    --shadow-hover: 0 4px 16px rgba(99,102,241,0.12);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     font-family: var(--font);
-    background: var(--bg-deep);
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* ========== Animated Background ========== */
+  /* ========== Soft Background ========== */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -2;
     background:
-      radial-gradient(ellipse 80% 60% at 20% 20%, rgba(99,102,241,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 80% at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 50%),
-      var(--bg-deep);
+      radial-gradient(ellipse 70% 50% at 0% 20%, rgba(99,102,241,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 100% 80%, rgba(6,182,212,0.03) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
   }
 
   /* ========== Scrollbar ========== */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.15); border-radius: 4px; }
 
   /* ========== Layout ========== */
   .app-container {
@@ -71,18 +79,16 @@
   }
 
   .main-area {
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--bg-card);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     padding: 28px;
-    transition: box-shadow 0.3s;
+    transition: box-shadow 0.3s, transform 0.2s;
   }
 
   .main-area:hover {
-    box-shadow: var(--shadow-card), var(--shadow-glow);
+    box-shadow: var(--shadow-hover);
   }
 
   /* ========== Header ========== */
@@ -92,7 +98,7 @@
     justify-content: space-between;
     margin-bottom: 24px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--card-border);
   }
 
   .logo-area {
@@ -139,8 +145,8 @@
     line-height: 1.5;
     padding: 6px 14px;
     border-radius: var(--radius-sm);
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--accent-soft);
+    border: 1px solid rgba(99,102,241,0.1);
   }
 
   .header-info strong {
@@ -173,9 +179,9 @@
     align-items: center;
     justify-content: center;
     padding: 16px 20px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius);
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
     position: relative;
@@ -194,17 +200,17 @@
   .model-btn:hover {
     border-color: rgba(99,102,241,0.3);
     transform: translateY(-1px);
-    background: rgba(255,255,255,0.05);
+    background: rgba(99,102,241,0.02);
   }
 
   .model-btn.active {
-    border-color: transparent;
-    background: rgba(99,102,241,0.15);
-    box-shadow: 0 0 20px rgba(99,102,241,0.15), inset 0 0 0 1px rgba(99,102,241,0.3);
+    border-color: var(--accent-1);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
   }
 
   .model-btn.active::before {
-    opacity: 0.08;
+    opacity: 0.05;
   }
 
   .model-btn .model-name {
@@ -256,9 +262,9 @@
 
   .ratio-btn {
     padding: 7px 14px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: 6px;
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
     cursor: pointer;
     transition: all 0.2s;
     font-size: 13px;
@@ -271,15 +277,14 @@
   .ratio-btn:hover {
     border-color: rgba(99,102,241,0.3);
     color: var(--text);
-    background: rgba(255,255,255,0.05);
+    background: rgba(99,102,241,0.02);
   }
 
   .ratio-btn.active {
     border-color: var(--accent-1);
-    background: rgba(99,102,241,0.15);
+    background: var(--accent-soft);
     color: var(--text);
     font-weight: 600;
-    box-shadow: 0 0 12px rgba(99,102,241,0.1);
   }
 
   /* Resolution */
@@ -291,9 +296,9 @@
 
   .resolution-btn {
     padding: 8px 24px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: 20px;
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
     cursor: pointer;
     transition: all 0.2s;
     font-size: 13px;
@@ -308,10 +313,10 @@
 
   .resolution-btn.active {
     border-color: var(--accent-3);
-    background: rgba(6,182,212,0.15);
+    background: rgba(6,182,212,0.06);
     color: var(--text);
     font-weight: 600;
-    box-shadow: 0 0 12px rgba(6,182,212,0.15);
+    box-shadow: 0 0 0 2px rgba(6,182,212,0.2);
   }
 
   /* ========== Prompt Input ========== */
@@ -323,12 +328,12 @@
     width: 100%;
     min-height: 100px;
     padding: 14px 16px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius);
     font-family: var(--font);
     font-size: 14px;
     color: var(--text);
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
     resize: vertical;
     transition: all 0.2s;
     outline: none;
@@ -338,7 +343,7 @@
   .prompt-area textarea:focus {
     border-color: rgba(99,102,241,0.4);
     box-shadow: 0 0 0 4px rgba(99,102,241,0.08);
-    background: rgba(255,255,255,0.05);
+    background: rgba(99,102,241,0.02);
   }
 
   .prompt-area textarea::placeholder {
@@ -361,9 +366,9 @@
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    border: 1.5px dashed rgba(255,255,255,0.15);
+    border: 1.5px dashed var(--card-border);
     border-radius: var(--radius-sm);
-    background: rgba(255,255,255,0.02);
+    background: var(--accent-soft);
     cursor: pointer;
     transition: all 0.2s;
     font-size: 13px;
@@ -372,9 +377,9 @@
   }
 
   .upload-btn:hover {
-    border-color: rgba(99,102,241,0.4);
+    border-color: var(--accent-1);
     color: var(--accent-1);
-    background: rgba(99,102,241,0.05);
+    background: var(--bg-card);
   }
 
   .upload-preview {
@@ -389,7 +394,7 @@
     height: 56px;
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
   }
 
   .upload-preview-item img {
@@ -435,14 +440,14 @@
     flex: 1;
     min-width: 180px;
     padding: 10px 14px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius-sm);
     font-size: 13px;
     outline: none;
     transition: all 0.2s;
     font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
     color: var(--text);
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
   }
 
   .key-input:focus {
@@ -457,9 +462,9 @@
 
   .btn {
     padding: 9px 16px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius-sm);
-    background: rgba(255,255,255,0.04);
+    background: var(--accent-soft);
     cursor: pointer;
     font-size: 13px;
     color: var(--text-secondary);
@@ -469,9 +474,9 @@
   }
 
   .btn:hover {
-    border-color: rgba(99,102,241,0.3);
-    color: var(--text);
-    background: rgba(255,255,255,0.06);
+    border-color: var(--accent-1);
+    color: var(--accent-1);
+    background: var(--accent-soft);
   }
 
   /* ========== Generate Button ========== */
@@ -528,7 +533,7 @@
   }
 
   .btn-generate.generating {
-    background: linear-gradient(135deg, #475569, #64748b);
+    background: linear-gradient(135deg, #94a3b8, #cbd5e1);
     animation: pulse 1.5s ease-in-out infinite;
   }
 
@@ -555,16 +560,16 @@
 
   .status-msg.error {
     display: block;
-    background: rgba(239,68,68,0.1);
-    color: #fca5a5;
-    border: 1px solid rgba(239,68,68,0.2);
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
   }
 
   .status-msg.success {
     display: block;
-    background: rgba(34,197,94,0.1);
-    color: #86efac;
-    border: 1px solid rgba(34,197,94,0.2);
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
   }
 
   /* ========== Loading ========== */
@@ -577,7 +582,7 @@
   .loading-indicator .spinner {
     width: 44px;
     height: 44px;
-    border: 3px solid rgba(255,255,255,0.06);
+    border: 3px solid var(--card-border);
     border-top-color: var(--accent-1);
     border-right-color: var(--accent-3);
     border-radius: 50%;
@@ -602,9 +607,10 @@
     width: 100%;
     border-radius: var(--radius);
     overflow: hidden;
-    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--card-border);
+    background: var(--bg-card);
     display: none;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--card-border);
   }
 
   .result-image-container img {
@@ -641,9 +647,7 @@
 
   /* ========== History Panel ========== */
   .history-panel {
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--bg-card);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
@@ -658,7 +662,7 @@
   }
 
   .history-panel:hover {
-    box-shadow: var(--shadow-card), var(--shadow-glow);
+    box-shadow: var(--shadow-hover);
   }
 
   .history-header {
@@ -667,7 +671,7 @@
     justify-content: space-between;
     margin-bottom: 16px;
     padding-bottom: 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--card-border);
   }
 
   .history-header h3 {
@@ -684,7 +688,7 @@
     color: var(--text-muted);
     cursor: pointer;
     background: none;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--card-border);
     padding: 5px 12px;
     border-radius: 6px;
     transition: all 0.2s;
@@ -709,17 +713,17 @@
     position: relative;
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--card-border);
     cursor: pointer;
     transition: all 0.2s;
     aspect-ratio: 1;
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
   }
 
   .history-item:hover {
     transform: scale(1.03);
     border-color: rgba(99,102,241,0.3);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.12);
   }
 
   .history-item img {
@@ -774,9 +778,9 @@
 
   .history-pagination button {
     padding: 5px 12px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     border-radius: 6px;
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-card);
     cursor: pointer;
     font-size: 12px;
     color: var(--text-secondary);
@@ -787,7 +791,7 @@
   .history-pagination button:hover:not(:disabled) {
     border-color: rgba(99,102,241,0.3);
     color: var(--text);
-    background: rgba(255,255,255,0.05);
+    background: rgba(99,102,241,0.02);
   }
 
   .history-pagination button:disabled {
@@ -800,8 +804,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.75);
     z-index: 1000;
     align-items: center;
     justify-content: center;
@@ -951,7 +954,7 @@
       <div class="logo-area">
         <div class="logo-icon">N</div>
         <div>
-          <div class="header-title">Nano Banana Pro <span>· AI 艺术生成</span></div>
+          <div class="header-title">创图大师 <span>· CreateMaster</span></div>
         </div>
       </div>
       <div class="header-info">
