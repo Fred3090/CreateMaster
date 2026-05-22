@@ -1289,6 +1289,37 @@ async function generateImage() {
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
 
+  // 获取当前选中模型的消耗积分
+  const activeModelBtn = modelGrid.querySelector('.model-btn.active');
+  const requiredCredits = parseInt(activeModelBtn?.dataset?.cost || '280');
+  const requiredRelayCredits = requiredCredits * 10;
+
+  // 先检查积分余额是否足够
+  loadingText.textContent = '正在检查积分余额...';
+  try {
+    const creditResp = await fetch('https://grsai.dakka.com.cn/client/openapi/getAPIKeyCredits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    const creditData = await creditResp.json();
+    if (creditData.code === 0 && creditData.data && typeof creditData.data.credits === 'number') {
+      const relayBalance = creditData.data.credits;
+      if (relayBalance < requiredRelayCredits) {
+        showError('积分余额不足，请联系作者充值');
+        state.isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.textContent = '✨ 生成';
+        generateBtn.classList.remove('generating');
+        loadingIndicator.style.display = 'none';
+        return;
+      }
+    }
+  } catch (e) {
+    // 查询积分失败，仍允许继续生成（可能网络问题，不影响用户体验）
+    console.warn('积分查询失败:', e.message);
+  }
+
   state.isGenerating = true;
   generateBtn.disabled = true;
   generateBtn.textContent = '⏳ 生成中...';
