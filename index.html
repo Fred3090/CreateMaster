@@ -1232,13 +1232,16 @@ queryBalanceBtn.addEventListener('click', async () => {
     return;
   }
 
+  // 获取当前选中模型在网页端的消耗积分
+  const activeBtn = modelGrid.querySelector('.model-btn.active');
+  const displayCost = parseInt(activeBtn?.dataset?.cost || '280');
+
   queryBalanceBtn.disabled = true;
   queryBalanceBtn.textContent = '查询中...';
   hideError();
   hideSuccess();
 
   try {
-    // 调用积分查询接口（参考原网站实现）
     const resp = await fetch('https://grsai.dakka.com.cn/client/openapi/getAPIKeyCredits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1247,24 +1250,26 @@ queryBalanceBtn.addEventListener('click', async () => {
     const data = await resp.json();
 
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
-      const credits = data.data.credits;
-      const remainingPoints = credits / 10;
-      if (remainingPoints > 0) {
-        showSuccess(`剩余积分: ${remainingPoints}`);
+      const relayCredits = data.data.credits;
+      // 公式：(中转站积分 + 1000) ÷ 10 - 网页端消耗
+      const displayBalance = (relayCredits + 1000) / 10;
+      const remainingAfterUse = displayBalance - displayCost;
+      const remainingDisplay = Math.max(0, Math.floor(remainingAfterUse));
+
+      if (displayBalance < displayCost) {
+        showError(`积分不足！当前 ${Math.floor(displayBalance)} 分，需要 ${displayCost} 分，请联系作者充值`);
       } else {
-        showSuccess(`剩余积分: 0（中转站需充值）`);
+        showSuccess(`剩余积分: ${remainingDisplay}（余额 ${Math.floor(displayBalance)} - 消耗 ${displayCost}）`);
       }
     } else {
-      // 显示API返回的详细信息，便于排查
-      const detail = JSON.stringify(data).substring(0, 200);
-      showError('查询失败: ' + (data.msg || '未知错误') + ' | 返回: ' + detail);
+      showError('查询失败: ' + (data.msg || '未知错误'));
     }
   } catch (err) {
     showError('查询失败: ' + err.message);
   } finally {
     queryBalanceBtn.disabled = false;
     queryBalanceBtn.textContent = '🔍 查询剩余';
-    setTimeout(() => { hideError(); hideSuccess(); }, 5000);
+    setTimeout(() => { hideError(); hideSuccess(); }, 6000);
   }
 });
 
@@ -1289,12 +1294,11 @@ async function generateImage() {
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
 
-  // 获取当前选中模型的消耗积分
+  // 获取当前选中模型的网页端消耗积分
   const activeModelBtn = modelGrid.querySelector('.model-btn.active');
-  const requiredCredits = parseInt(activeModelBtn?.dataset?.cost || '280');
-  const requiredRelayCredits = requiredCredits * 10;
+  const displayCost = parseInt(activeModelBtn?.dataset?.cost || '280');
 
-  // 先检查积分余额是否足够
+  // 先检查积分余额是否足够（以网页端积分为准）
   loadingText.textContent = '正在检查积分余额...';
   try {
     const creditResp = await fetch('https://grsai.dakka.com.cn/client/openapi/getAPIKeyCredits', {
@@ -1305,8 +1309,10 @@ async function generateImage() {
     const creditData = await creditResp.json();
     if (creditData.code === 0 && creditData.data && typeof creditData.data.credits === 'number') {
       const relayBalance = creditData.data.credits;
-      if (relayBalance < requiredRelayCredits) {
-        showError('积分余额不足，请联系作者充值');
+      // 公式：(中转站积分 + 1000) ÷ 10
+      const displayBalance = (relayBalance + 1000) / 10;
+      if (displayBalance < displayCost) {
+        showError(`积分余额不足，请联系作者充值（当前 ${Math.floor(displayBalance)} 分，需要 ${displayCost} 分）`);
         state.isGenerating = false;
         generateBtn.disabled = false;
         generateBtn.textContent = '✨ 生成';
@@ -1316,7 +1322,6 @@ async function generateImage() {
       }
     }
   } catch (e) {
-    // 查询积分失败，仍允许继续生成（可能网络问题，不影响用户体验）
     console.warn('积分查询失败:', e.message);
   }
 
