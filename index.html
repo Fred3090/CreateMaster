@@ -1251,15 +1251,14 @@ queryBalanceBtn.addEventListener('click', async () => {
 
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
       const relayCredits = data.data.credits;
-      // 公式：中转站积分 ÷ 10 - 网页端消耗
+      // 公式：中转站积分 ÷ 10 = 网页端显示余额
       const displayBalance = relayCredits / 10;
-      const remainingAfterUse = displayBalance - displayCost;
-      const remainingDisplay = Math.max(0, Math.floor(remainingAfterUse));
 
       if (displayBalance < displayCost) {
         showError(`积分不足！当前 ${Math.floor(displayBalance)} 分，需要 ${displayCost} 分，请联系作者充值`);
       } else {
-        showSuccess(`剩余积分: ${remainingDisplay}（余额 ${Math.floor(displayBalance)} - 消耗 ${displayCost}）`);
+        // 只显示实时积分余额（不包含扣除逻辑提示）
+        showSuccess(`剩余积分: ${Math.floor(displayBalance)}`);
       }
     } else {
       showError('查询失败: ' + (data.msg || '未知错误'));
