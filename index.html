@@ -883,9 +883,7 @@
     <div>
       <span class="section-label">分辨率</span>
       <div class="resolution-grid" id="resolutionGrid">
-        <button class="resolution-btn active" data-size="1K">1K 标准</button>
-        <button class="resolution-btn" data-size="2K">2K 高清</button>
-        <button class="resolution-btn" data-size="4K">4K 超清</button>
+        <button class="resolution-btn active" data-size="4K">4K 超清</button>
       </div>
     </div>
 
@@ -1041,7 +1039,7 @@ function compute4KSize(ratioStr) {
 let state = {
   model: 'nano-banana-pro',
   aspectRatio: '1:1',
-  imageSize: '1K',
+  imageSize: '4K',
   prompt: '',
   images: [],
   imageBase64List: [],
@@ -1107,25 +1105,7 @@ function updatePixelInfo() {
 
 // ============= Resolution Auto-Lock =============
 function updateResolutionLock() {
-  const isGptVip = state.model === 'gpt-image-2-vip';
-  resolutionGrid.querySelectorAll('.resolution-btn').forEach((btn, idx) => {
-    // VIP 强制 4K：选中 4K 按钮，禁用其他
-    if (isGptVip) {
-      if (btn.dataset.size === '4K') {
-        btn.classList.add('active');
-        state.imageSize = '4K';
-      } else {
-        btn.classList.remove('active');
-      }
-      btn.style.opacity = btn.dataset.size === '4K' ? '1' : '0.35';
-      btn.style.cursor = btn.dataset.size === '4K' ? 'default' : 'not-allowed';
-      btn.style.pointerEvents = btn.dataset.size === '4K' ? 'auto' : 'none';
-    } else {
-      btn.style.opacity = '1';
-      btn.style.cursor = 'pointer';
-      btn.style.pointerEvents = 'auto';
-    }
-  });
+  // 只有一个 4K 选项，无需额外操作
 }
 
 // ============= Model Selection =============
