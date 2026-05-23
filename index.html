@@ -1208,8 +1208,11 @@ queryBalanceBtn.addEventListener('click', async () => {
 
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
       const relayCredits = data.data.credits;
-      const displayBalance = Math.floor(relayCredits / 10);
-      showSuccess(`剩余积分: ${displayBalance}`);
+      const activeBtn = modelGrid.querySelector('.model-btn.active');
+      const displayCost = parseInt(activeBtn?.dataset?.cost || '280');
+      const displayBalance = relayCredits / 10;
+      const remaining = Math.max(0, Math.floor(displayBalance - displayCost));
+      showSuccess(`剩余积分: ${remaining}`);
     } else {
       showError('查询失败: ' + (data.msg || '未知错误'));
     }
