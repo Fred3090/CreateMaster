@@ -1215,20 +1215,23 @@ queryBalanceBtn.addEventListener('click', async () => {
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
       const relayCredits = data.data.credits;
 
-      // 如果中转站积分增加了（充值），增量部分÷10 加到本地积分
-      if (relayCredits > lastRelayCredits) {
+      if (lastRelayCredits === 0 && displayCredits === 0) {
+        // 首次查询：初始化本地积分
+        displayCredits = relayCredits / 10;
+        lastRelayCredits = relayCredits;
+        localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
+        saveDisplayCredits();
+      } else if (relayCredits > lastRelayCredits) {
+        // 续费充值：增量 ÷10 累加到本地积分
         const increase = relayCredits - lastRelayCredits;
         displayCredits += increase / 10;
         lastRelayCredits = relayCredits;
         localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
         saveDisplayCredits();
-      } else if (lastRelayCredits === 0 && displayCredits === 0) {
-        // 首次查询：初始化
-        displayCredits = relayCredits / 10;
-        lastRelayCredits = relayCredits;
-        localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
-        saveDisplayCredits();
       }
+      // 中转站积分减少（正常生图消耗）：不修改本地积分，只记录新值
+      lastRelayCredits = relayCredits;
+      localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
 
       const remaining = Math.max(0, Math.floor(displayCredits));
       showSuccess(`剩余积分: ${remaining}`);
@@ -1270,9 +1273,10 @@ async function generateImage() {
     const creditData = await creditResp.json();
     if (creditData.code === 0 && creditData.data && typeof creditData.data.credits === 'number') {
       const relayBalance = creditData.data.credits;
-      const displayBalance = relayBalance / 10;
-      if (displayBalance < displayCost) {
-        showError(`积分余额不足，请联系作者充值（当前 ${Math.floor(displayBalance)} 分，需要 ${displayCost} 分）`);
+      // 使用本地积分余额检查，而非中转站积分÷10
+      const currentBalance = Math.max(0, Math.floor(displayCredits));
+      if (currentBalance < displayCost) {
+        showError(`积分余额不足，请联系作者充值（当前 ${currentBalance} 分，需要 ${displayCost} 分）`);
         state.isGenerating = false;
         generateBtn.disabled = false;
         generateBtn.textContent = '✨ 开始生成';
