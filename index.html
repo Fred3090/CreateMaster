@@ -972,12 +972,13 @@ const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
 
 // ============= 本地积分追踪（按 API Key 独立存储） =============
+// 使用完整 API Key 作为存储标识，确保每个 Key 积分独立
 function getCreditsKey(apiKey) {
-  return 'cm_credits_' + (apiKey || 'default');
+  return 'cmc_' + (apiKey || 'default');
 }
 
 function getRelayKey(apiKey) {
-  return 'cm_relay_' + (apiKey || 'default');
+  return 'cmr_' + (apiKey || 'default');
 }
 
 function loadCredits(apiKey) {
@@ -1000,15 +1001,27 @@ let displayCredits = 0;
 let lastRelayCredits = 0;
 
 function switchToKey(apiKey) {
+  const newKey = apiKey || 'default';
+  // 如果还是同一个 Key，直接返回不重复保存/加载
+  if (currentKey === newKey) {
+    return;
+  }
   // 保存当前 key 的积分
   if (currentKey) {
     saveCredits(currentKey, displayCredits, lastRelayCredits);
   }
   // 加载新 key 的积分
-  currentKey = apiKey || '';
+  currentKey = newKey;
   const data = loadCredits(currentKey);
   displayCredits = data.display;
   lastRelayCredits = data.lastRelay;
+}
+
+// 获取 Key 的简短标识用于显示
+function keyShortId(apiKey) {
+  if (!apiKey) return '空';
+  if (apiKey.length <= 10) return apiKey;
+  return apiKey.slice(0, 8) + '...' + apiKey.slice(-4);
 }
 
 // ============= 4K Size Calculation =============
@@ -1278,7 +1291,8 @@ queryBalanceBtn.addEventListener('click', async () => {
       saveCredits(currentKey, displayCredits, lastRelayCredits);
 
       const remaining = Math.max(0, Math.floor(displayCredits));
-      showSuccess(`剩余积分: ${remaining}`);
+      const shortKey = keyShortId(key);
+      showSuccess(`剩余积分: ${remaining}（Key: ${shortKey}）`);
     } else {
       showError('查询失败: ' + (data.msg || '未知错误'));
     }
