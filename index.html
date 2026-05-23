@@ -973,11 +973,11 @@ const STORAGE_KEY_HISTORY = 'nanobanana_history';
 
 // ============= 本地积分追踪（按 API Key 独立存储） =============
 function getCreditsKey(apiKey) {
-  return 'cm_credits_' + (apiKey ? apiKey.slice(0, 20) : 'default');
+  return 'cm_credits_' + (apiKey || 'default');
 }
 
 function getRelayKey(apiKey) {
-  return 'cm_relay_' + (apiKey ? apiKey.slice(0, 20) : 'default');
+  return 'cm_relay_' + (apiKey || 'default');
 }
 
 function loadCredits(apiKey) {
