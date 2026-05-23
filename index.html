@@ -1233,11 +1233,18 @@ saveKeyBtn.addEventListener('click', () => {
 });
 
 queryBalanceBtn.addEventListener('click', async () => {
-  const key = apiKeyInput.value.trim() || state.apiKey;
-  if (!key) { showError('请先输入 API Key'); return; }
+  let key = apiKeyInput.value.trim();
+  // 输入为空时使用已保存的 Key（如果有）
+  if (!key) {
+    key = state.apiKey || '';
+    if (!key) { showError('请先输入或保存 API Key'); return; }
+  }
 
-  // 切换到当前 API Key 的积分记录
+  // 切换到当前输入的 Key（无论是否保存过）
   switchToKey(key);
+  // 保存到 state 和 localStorage
+  state.apiKey = key;
+  localStorage.setItem(STORAGE_KEY_KEY, key);
 
   queryBalanceBtn.disabled = true;
   queryBalanceBtn.textContent = '查询中...';
@@ -1290,16 +1297,16 @@ generateBtn.addEventListener('click', generateImage);
 async function generateImage() {
   if (state.isGenerating) return;
 
-  const key = apiKeyInput.value.trim() || state.apiKey;
-  if (!key) { showError('请先输入 API Key'); return; }
+  let key = apiKeyInput.value.trim();
+  if (!key) {
+    key = state.apiKey || '';
+    if (!key) { showError('请先输入或保存 API Key'); return; }
+  }
   if (!state.prompt.trim()) { showError('请输入创意描述'); return; }
 
-  // 切换到当前 API Key 的积分记录
   switchToKey(key);
-
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
-  switchToKey(key);
 
   const activeModelBtn = modelGrid.querySelector('.model-btn.active');
   const displayCost = parseInt(activeModelBtn?.dataset?.cost || '280');
