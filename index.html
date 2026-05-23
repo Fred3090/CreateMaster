@@ -1236,6 +1236,9 @@ queryBalanceBtn.addEventListener('click', async () => {
   const key = apiKeyInput.value.trim() || state.apiKey;
   if (!key) { showError('请先输入 API Key'); return; }
 
+  // 切换到当前 API Key 的积分记录
+  switchToKey(key);
+
   queryBalanceBtn.disabled = true;
   queryBalanceBtn.textContent = '查询中...';
   hideError(); hideSuccess();
@@ -1290,6 +1293,9 @@ async function generateImage() {
   const key = apiKeyInput.value.trim() || state.apiKey;
   if (!key) { showError('请先输入 API Key'); return; }
   if (!state.prompt.trim()) { showError('请输入创意描述'); return; }
+
+  // 切换到当前 API Key 的积分记录
+  switchToKey(key);
 
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
