@@ -970,6 +970,12 @@ const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
 
 const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
+const STORAGE_KEY_DISPLAY = 'createmaster_display_credits';
+const STORAGE_KEY_RELAY = 'createmaster_last_relay';
+
+// ============= 本地积分追踪 =============
+let displayCredits = parseFloat(localStorage.getItem(STORAGE_KEY_DISPLAY)) || 0;
+let lastRelayCredits = parseFloat(localStorage.getItem(STORAGE_KEY_RELAY)) || 0;
 
 // ============= 4K Size Calculation =============
 function compute4KSize(ratioStr) {
@@ -1208,8 +1214,24 @@ queryBalanceBtn.addEventListener('click', async () => {
 
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
       const relayCredits = data.data.credits;
-      const displayBalance = Math.floor(relayCredits / 10);
-      showSuccess(`剩余积分: ${displayBalance}`);
+
+      // 如果中转站积分增加了（充值），增量部分÷10 加到本地积分
+      if (relayCredits > lastRelayCredits) {
+        const increase = relayCredits - lastRelayCredits;
+        displayCredits += increase / 10;
+        lastRelayCredits = relayCredits;
+        localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
+        saveDisplayCredits();
+      } else if (lastRelayCredits === 0 && displayCredits === 0) {
+        // 首次查询：初始化
+        displayCredits = relayCredits / 10;
+        lastRelayCredits = relayCredits;
+        localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
+        saveDisplayCredits();
+      }
+
+      const remaining = Math.max(0, Math.floor(displayCredits));
+      showSuccess(`剩余积分: ${remaining}`);
     } else {
       showError('查询失败: ' + (data.msg || '未知错误'));
     }
@@ -1302,6 +1324,7 @@ async function generateImage() {
       const imageUrl = data.results[0].url;
       const usedCost = parseInt(activeModelBtn?.dataset?.cost || '280');
       const usedModel = activeModelBtn?.querySelector('.model-name')?.textContent || '';
+      deductCredits(usedCost);
       showResult(imageUrl);
       showSuccess(`✅ 生图完成！本次消耗 ${usedCost} 积分（${usedModel}）`);
       setTimeout(() => hideSuccess(), 5000);
@@ -1348,11 +1371,11 @@ async function pollResult(taskId, key) {
 
       if (data.status === 'succeeded' && data.results && data.results.length > 0) {
         const imageUrl = data.results[0].url;
-        showResult(imageUrl);
-        addToHistory(imageUrl);
-        // 显示本次消耗（从状态中获取模型消耗）
         const cost = state.lastUsedCost || 0;
         const modelName = state.lastUsedModel || '';
+        deductCredits(cost);
+        showResult(imageUrl);
+        addToHistory(imageUrl);
         showSuccess(`✅ 生图完成！本次消耗 ${cost} 积分（${modelName}）`);
         setTimeout(() => hideSuccess(), 5000);
         return;
@@ -1371,6 +1394,17 @@ async function pollResult(taskId, key) {
 }
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+// ============= 本地积分保存 =============
+function saveDisplayCredits() {
+  localStorage.setItem(STORAGE_KEY_DISPLAY, displayCredits);
+}
+
+function deductCredits(cost) {
+  displayCredits -= cost;
+  if (displayCredits < 0) displayCredits = 0;
+  saveDisplayCredits();
+}
 
 // ============= Display Result =============
 function showResult(url) {
