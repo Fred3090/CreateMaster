@@ -970,12 +970,46 @@ const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
 
 const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
-const STORAGE_KEY_DISPLAY = 'createmaster_display_credits';
-const STORAGE_KEY_RELAY = 'createmaster_last_relay';
 
-// ============= 本地积分追踪 =============
-let displayCredits = parseFloat(localStorage.getItem(STORAGE_KEY_DISPLAY)) || 0;
-let lastRelayCredits = parseFloat(localStorage.getItem(STORAGE_KEY_RELAY)) || 0;
+// ============= 本地积分追踪（按 API Key 独立存储） =============
+function getCreditsKey(apiKey) {
+  return 'cm_credits_' + (apiKey ? apiKey.slice(0, 20) : 'default');
+}
+
+function getRelayKey(apiKey) {
+  return 'cm_relay_' + (apiKey ? apiKey.slice(0, 20) : 'default');
+}
+
+function loadCredits(apiKey) {
+  const ck = getCreditsKey(apiKey);
+  const rk = getRelayKey(apiKey);
+  return {
+    display: parseFloat(localStorage.getItem(ck)) || 0,
+    lastRelay: parseFloat(localStorage.getItem(rk)) || 0
+  };
+}
+
+function saveCredits(apiKey, display, lastRelay) {
+  localStorage.setItem(getCreditsKey(apiKey), display);
+  localStorage.setItem(getRelayKey(apiKey), lastRelay);
+}
+
+// 当前使用的 API Key 对应的积分
+let currentKey = '';
+let displayCredits = 0;
+let lastRelayCredits = 0;
+
+function switchToKey(apiKey) {
+  // 保存当前 key 的积分
+  if (currentKey) {
+    saveCredits(currentKey, displayCredits, lastRelayCredits);
+  }
+  // 加载新 key 的积分
+  currentKey = apiKey || '';
+  const data = loadCredits(currentKey);
+  displayCredits = data.display;
+  lastRelayCredits = data.lastRelay;
+}
 
 // ============= 4K Size Calculation =============
 function compute4KSize(ratioStr) {
@@ -1081,6 +1115,7 @@ const pixelInfo = $('#pixelInfo');
 
 // ============= Init =============
 apiKeyInput.value = state.apiKey;
+switchToKey(state.apiKey);
 updatePixelInfo();
 updateResolutionLock();
 
@@ -1191,6 +1226,7 @@ saveKeyBtn.addEventListener('click', () => {
   }
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
+  switchToKey(key);
   hideError();
   showSuccess('API Key 已保存');
   setTimeout(() => hideSuccess(), 2000);
@@ -1219,19 +1255,17 @@ queryBalanceBtn.addEventListener('click', async () => {
         // 首次查询：初始化本地积分
         displayCredits = relayCredits / 10;
         lastRelayCredits = relayCredits;
-        localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
-        saveDisplayCredits();
+        saveCredits(currentKey, displayCredits, lastRelayCredits);
       } else if (relayCredits > lastRelayCredits) {
         // 续费充值：增量 ÷10 累加到本地积分
         const increase = relayCredits - lastRelayCredits;
         displayCredits += increase / 10;
         lastRelayCredits = relayCredits;
-        localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
-        saveDisplayCredits();
+        saveCredits(currentKey, displayCredits, lastRelayCredits);
       }
       // 中转站积分减少（正常生图消耗）：不修改本地积分，只记录新值
       lastRelayCredits = relayCredits;
-      localStorage.setItem(STORAGE_KEY_RELAY, relayCredits);
+      saveCredits(currentKey, displayCredits, lastRelayCredits);
 
       const remaining = Math.max(0, Math.floor(displayCredits));
       showSuccess(`剩余积分: ${remaining}`);
@@ -1259,6 +1293,7 @@ async function generateImage() {
 
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
+  switchToKey(key);
 
   const activeModelBtn = modelGrid.querySelector('.model-btn.active');
   const displayCost = parseInt(activeModelBtn?.dataset?.cost || '280');
@@ -1401,7 +1436,7 @@ function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 // ============= 本地积分保存 =============
 function saveDisplayCredits() {
-  localStorage.setItem(STORAGE_KEY_DISPLAY, displayCredits);
+  saveCredits(currentKey, displayCredits, lastRelayCredits);
 }
 
 function deductCredits(cost) {
