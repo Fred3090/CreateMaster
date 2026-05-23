@@ -1350,7 +1350,7 @@ queryBalanceBtn.addEventListener('click', async () => {
 
     if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
       const relayCredits = data.data.credits;
-      const displayBalance = (relayCredits + 1000) / 10;
+      const displayBalance = relayCredits / 10;
       const remainingAfterUse = Math.floor(displayBalance - displayCost);
 
       if (displayBalance < displayCost) {
@@ -1396,7 +1396,7 @@ async function generateImage() {
     const creditData = await creditResp.json();
     if (creditData.code === 0 && creditData.data && typeof creditData.data.credits === 'number') {
       const relayBalance = creditData.data.credits;
-      const displayBalance = (relayBalance + 1000) / 10;
+      const displayBalance = relayBalance / 10;
       if (displayBalance < displayCost) {
         showError(`积分余额不足，请联系作者充值（当前 ${Math.floor(displayBalance)} 分，需要 ${displayCost} 分）`);
         state.isGenerating = false;
