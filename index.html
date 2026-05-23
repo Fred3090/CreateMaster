@@ -1300,9 +1300,16 @@ async function generateImage() {
 
     if (data.status === 'succeeded' && data.results && data.results.length > 0) {
       const imageUrl = data.results[0].url;
+      const usedCost = parseInt(activeModelBtn?.dataset?.cost || '280');
+      const usedModel = activeModelBtn?.querySelector('.model-name')?.textContent || '';
       showResult(imageUrl);
+      showSuccess(`✅ 生图完成！本次消耗 ${usedCost} 积分（${usedModel}）`);
+      setTimeout(() => hideSuccess(), 5000);
       addToHistory(imageUrl);
     } else if (data.status === 'running' || data.status === 'queued') {
+      // 记录模型信息，供 pollResult 使用
+      state.lastUsedCost = usedCost;
+      state.lastUsedModel = usedModel;
       await pollResult(data.id, key);
     } else if (data.status === 'violation') {
       showError('内容违规，请修改提示词后重试');
@@ -1343,6 +1350,11 @@ async function pollResult(taskId, key) {
         const imageUrl = data.results[0].url;
         showResult(imageUrl);
         addToHistory(imageUrl);
+        // 显示本次消耗（从状态中获取模型消耗）
+        const cost = state.lastUsedCost || 0;
+        const modelName = state.lastUsedModel || '';
+        showSuccess(`✅ 生图完成！本次消耗 ${cost} 积分（${modelName}）`);
+        setTimeout(() => hideSuccess(), 5000);
         return;
       } else if (data.status === 'violation') {
         showError('内容违规，请修改提示词后重试');
