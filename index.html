@@ -814,57 +814,8 @@
 
   #pixelInfo { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
-  /* ========== Admin Panel ========== */
-  .admin-gear {
-    position: fixed; bottom: 20px; right: 20px; z-index: 999;
-    width: 40px; height: 40px; border-radius: 50%;
-    background: var(--bg-card); border: 1px solid var(--card-border);
-    color: var(--text-muted); font-size: 18px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; opacity: 0.4;
-  }
-  .admin-gear:hover { opacity: 1; color: var(--accent-1); border-color: var(--accent-1); }
-  .admin-overlay {
-    display: none; position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
-  }
-  .admin-overlay.show { display: flex; }
-  .admin-modal {
-    background: var(--bg-card); border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg); padding: 28px; max-width: 700px;
-    width: 90vw; max-height: 80vh; overflow-y: auto;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
-  }
-  .admin-modal h2 { font-size: 18px; margin-bottom: 16px; color: var(--text); }
-  .admin-modal .admin-close {
-    float: right; background: none; border: none; color: var(--text-muted);
-    font-size: 20px; cursor: pointer; padding: 0 4px;
-  }
-  .admin-modal .admin-close:hover { color: var(--danger); }
-  .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .admin-table th { text-align: left; color: var(--text-muted); padding: 8px 6px; border-bottom: 1px solid var(--card-border); font-weight: 600; }
-  .admin-table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); vertical-align: middle; }
-  .admin-table input, .admin-table select {
-    background: var(--input-bg); border: 1px solid var(--card-border);
-    border-radius: 4px; padding: 5px 8px; font-size: 12px; color: var(--text);
-    outline: none; width: 100%; box-sizing: border-box;
-  }
-  .admin-table input:focus { border-color: var(--accent-1); }
-  .admin-btn {
-    padding: 5px 12px; border-radius: 4px; border: 1px solid var(--card-border);
-    background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: pointer;
-    font-size: 11px; transition: all 0.2s; white-space: nowrap;
-  }
-  .admin-btn:hover { border-color: var(--accent-1); color: var(--accent-1); }
-  .admin-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
-  .admin-btn.primary { background: var(--accent-1); color: white; border-color: var(--accent-1); }
-  .admin-btn.primary:hover { background: var(--accent-2); }
-  .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-  .admin-add-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
-  .admin-add-row input { flex: 1; min-width: 120px; }
-  .admin-empty { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 13px; }
-  .admin-search { margin-bottom: 12px; }
-  .admin-search input { width: 100%; padding: 8px 12px; }
+  .admin-link { font-size: 12px; color: var(--text-muted); text-decoration: none; display: inline-block; transition: color 0.2s; cursor: pointer; }
+  .admin-link:hover { color: var(--accent-1); }
 </style>
 </head>
 <body>
@@ -881,7 +832,8 @@
         </div>
       </div>
       <div class="header-info">
-        微信：<strong>qingchuan7818</strong>
+        微信：<strong>qingchuan7818</strong><br>
+        <a href="https://fred3090.github.io/CreateMaster/admin.html" class="admin-link" target="_blank">⚙️ 管理</a>
       </div>
     </div>
 
@@ -1023,7 +975,6 @@ const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
 const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
 const ADMIN_KEYS_KEY = 'cm_admin_keys';
-const ADMIN_SECRET = 'createmaster2024';
 
 // ============= 管理员积分数据（按 API Key 独立管理） =============
 function getAdminKeys() {
@@ -1731,54 +1682,5 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
-
-<!-- Admin Panel -->
-<button class="admin-gear" id="adminGearBtn" title="管理员入口">⚙️</button>
-
-<!-- 密码验证弹窗 -->
-<div class="admin-overlay" id="adminPwdOverlay">
-  <div class="admin-modal" style="max-width:400px;">
-    <h2>🔐 管理员验证</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">请输入管理员密码</p>
-    <input type="password" id="adminPwdInput" placeholder="输入密码..." style="width:100%;padding:10px 14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;" autofocus>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="admin-btn" onclick="document.getElementById('adminPwdOverlay').classList.remove('show')">取消</button>
-      <button class="admin-btn primary" id="adminPwdSubmit">确认</button>
-    </div>
-    <div id="adminPwdError" style="color:var(--danger);font-size:12px;margin-top:8px;display:none;">密码错误</div>
-  </div>
-</div>
-
-<!-- 管理面板弹窗 -->
-<div class="admin-overlay" id="adminPanelOverlay">
-  <div class="admin-modal">
-    <button class="admin-close" onclick="closeAdminPanel()">✕</button>
-    <h2>⚙️ 管理员 · 积分充值中心</h2>
-    <div class="admin-add-row">
-      <input type="text" id="adminNewKey" placeholder="输入新 API Key...">
-      <input type="number" id="adminNewCredits" placeholder="初始积分" style="width:100px;">
-      <input type="text" id="adminNewNote" placeholder="备注（选填）" style="width:120px;">
-      <button class="admin-btn primary" onclick="adminAddKey()">➕ 添加</button>
-    </div>
-    <div class="admin-search">
-      <input type="text" id="adminSearchInput" placeholder="搜索 API Key..." oninput="renderAdminTable()">
-    </div>
-    <table class="admin-table">
-      <thead><tr>
-        <th style="width:30%;">API Key</th>
-        <th style="width:15%;">积分</th>
-        <th style="width:20%;">备注</th>
-        <th style="width:35%;">操作</th>
-      </tr></thead>
-      <tbody id="adminTableBody"></tbody>
-    </table>
-    <div class="admin-empty" id="adminEmpty">暂无记录</div>
-    <div style="margin-top:16px;display:flex;gap:8px;">
-      <span style="color:var(--text-muted);font-size:12px;">数据存储于浏览器本地</span>
-      <button class="admin-btn danger" onclick="if(confirm('确定清空所有 Key 的积分记录？')){localStorage.removeItem('cm_admin_keys');renderAdminTable();}">🗑️ 清空全部</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
