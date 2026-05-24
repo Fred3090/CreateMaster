@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>创图大师 · 管理员</title>
+<style>
+  :root {
+    --bg: #0b0d19;
+    --bg-card: #161b33;
+    --card-border: rgba(255,255,255,0.06);
+    --text: #edf2f7;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-1: #818cf8;
+    --accent-2: #a78bfa;
+    --accent-3: #22d3ee;
+    --accent-gradient: linear-gradient(135deg, #818cf8, #a78bfa, #22d3ee);
+    --input-bg: rgba(255,255,255,0.04);
+    --success: #22c55e;
+    --danger: #ef4444;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font); background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 20px;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background: radial-gradient(ellipse 70% 55% at 15% 20%, rgba(99,102,241,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 60% at 85% 80%, rgba(34,211,238,0.04) 0%, transparent 60%),
+                var(--bg);
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--card-border);
+    border-radius: var(--radius); padding: 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .header h1 {
+    font-size: 20px; font-weight: 700;
+    background: var(--accent-gradient); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header .sub { font-size: 13px; color: var(--text-muted); -webkit-text-fill-color: var(--text-muted); }
+  .header a { color: var(--text-muted); font-size: 13px; text-decoration: none; }
+  .header a:hover { color: var(--accent-1); }
+  .pwd-box {
+    margin-bottom: 20px; display: flex; gap: 8px; align-items: center;
+    background: var(--input-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm); padding: 12px 16px;
+  }
+  .pwd-box input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-size: 14px;
+  }
+  .pwd-box input::placeholder { color: var(--text-muted); }
+  .pwd-box .login-btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    background: var(--accent-gradient); color: white; cursor: pointer;
+    font-weight: 600; font-size: 13px; transition: all 0.2s;
+  }
+  .pwd-box .login-btn:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.25); }
+  .pwd-box .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pwd-error { color: var(--danger); font-size: 12px; display: none; margin-top: -12px; margin-bottom: 12px; }
+  .admin-section { display: none; }
+  .admin-section.show { display: block; }
+
+  .add-row {
+    display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
+    background: var(--input-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm); padding: 12px 16px;
+  }
+  .add-row input {
+    flex: 1; min-width: 100px; padding: 8px 10px;
+    background: var(--bg-card); border: 1px solid var(--card-border);
+    border-radius: 4px; color: var(--text); font-size: 13px; outline: none;
+  }
+  .add-row input:focus { border-color: var(--accent-1); }
+  .add-row input::placeholder { color: var(--text-muted); }
+  .add-row .add-note { max-width: 120px; }
+  .add-row .add-credits { max-width: 90px; }
+
+  .btn {
+    padding: 7px 16px; border: 1px solid var(--card-border); border-radius: 6px;
+    background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: pointer;
+    font-size: 12px; transition: all 0.2s; white-space: nowrap; font-weight: 500;
+  }
+  .btn:hover { border-color: var(--accent-1); color: var(--accent-1); }
+  .btn.primary { background: var(--accent-gradient); color: white; border: none; }
+  .btn.primary:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.25); }
+  .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--text-muted); padding: 10px 8px;
+       border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
+  td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text); vertical-align: middle; }
+  td input {
+    width: 100%; padding: 6px 8px; background: var(--input-bg);
+    border: 1px solid var(--card-border); border-radius: 4px; color: var(--text);
+    font-size: 12px; outline: none; box-sizing: border-box;
+  }
+  td input:focus { border-color: var(--accent-1); }
+  td .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+  .empty-row { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 13px; }
+
+  .stats { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-card {
+    flex: 1; min-width: 100px; background: var(--input-bg);
+    border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+    padding: 14px 16px; text-align: center;
+  }
+  .stat-card .num { font-size: 22px; font-weight: 700; color: var(--accent-3); }
+  .stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .msg {
+    padding: 10px 14px; border-radius: 6px; font-size: 13px; display: none;
+    margin-bottom: 12px; font-weight: 500; animation: fadeIn 0.2s ease;
+  }
+  .msg.success { display: block; background: rgba(34,197,94,0.08); color: #86efac; border: 1px solid rgba(34,197,94,0.15); }
+  .msg.error { display: block; background: rgba(239,68,68,0.08); color: #fca5a5; border: 1px solid rgba(239,68,68,0.15); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .search-row {
+    margin-bottom: 12px;
+  }
+  .search-row input {
+    width: 100%; padding: 8px 12px; background: var(--input-bg);
+    border: 1px solid var(--card-border); border-radius: 6px; color: var(--text);
+    font-size: 13px; outline: none; box-sizing: border-box;
+  }
+  .search-row input:focus { border-color: var(--accent-1); }
+  .search-row input::placeholder { color: var(--text-muted); }
+
+  .footer { margin-top: 16px; font-size: 12px; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
+
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .card { padding: 16px; }
+    th, td { padding: 6px 4px; font-size: 12px; }
+    .add-row input { min-width: 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <div>
+        <h1>⚙️ 创图大师 <span class="sub">· 积分充值中心</span></h1>
+      </div>
+      <a href="https://fred3090.github.io/CreateMaster/" target="_blank">← 返回生图页</a>
+    </div>
+
+    <!-- Password -->
+    <div class="pwd-box" id="pwdBox">
+      <span style="color:var(--text-muted);">🔐</span>
+      <input type="password" id="pwdInput" placeholder="输入管理员密码..." autofocus>
+      <button class="login-btn" id="loginBtn">登录</button>
+    </div>
+    <div class="pwd-error" id="pwdError">密码错误，请重试</div>
+
+    <!-- Admin Content -->
+    <div class="admin-section" id="adminContent">
+      <!-- Stats -->
+      <div class="stats" id="statsRow"></div>
+
+      <!-- Add Key -->
+      <div class="add-row">
+        <input type="text" id="newKeyInput" placeholder="API Key..." style="flex:2;">
+        <input type="number" id="newCreditsInput" class="add-credits" placeholder="积分" min="0">
+        <input type="text" id="newNoteInput" class="add-note" placeholder="备注">
+        <button class="btn primary" onclick="addKey()">➕ 添加</button>
+      </div>
+
+      <!-- Search -->
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="搜索 API Key 或备注..." oninput="renderTable()">
+      </div>
+
+      <!-- Message -->
+      <div class="msg" id="msgBox"></div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th>API Key</th>
+            <th style="width:100px;">积分</th>
+            <th>备注</th>
+            <th style="width:160px;">操作</th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-row" id="emptyRow">暂无记录，请添加 API Key</div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <span>总计 <strong id="totalKeys">0</strong> 个 Key · 总积分 <strong id="totalCredits">0</strong></span>
+        <button class="btn danger" onclick="clearAll()">🗑️ 清空全部</button>
+        <button class="btn" onclick="exportData()">📥 导出</button>
+        <button class="btn" onclick="document.getElementById('importFile').click()">📤 导入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_SECRET = 'createmaster2024';
+const ADMIN_KEYS_KEY = 'cm_admin_keys';
+
+let loggedIn = false;
+
+// ---- Data ----
+function getAdminKeys() {
+  try { return JSON.parse(localStorage.getItem(ADMIN_KEYS_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function saveAdminKeys(data) { localStorage.setItem(ADMIN_KEYS_KEY, JSON.stringify(data)); }
+function getKeyCredits(apiKey) { const k = getAdminKeys(); return k[apiKey]?.credits ?? 0; }
+function keyShortId(apiKey) {
+  if (!apiKey) return '空';
+  if (apiKey.length <= 10) return apiKey;
+  return apiKey.slice(0, 8) + '...' + apiKey.slice(-4);
+}
+
+// ---- Auth ----
+function login() {
+  const pwd = document.getElementById('pwdInput').value;
+  if (pwd === ADMIN_SECRET) {
+    loggedIn = true;
+    document.getElementById('pwdBox').style.display = 'none';
+    document.getElementById('pwdError').style.display = 'none';
+    document.getElementById('adminContent').classList.add('show');
+    renderTable();
+    document.getElementById('newKeyInput').focus();
+  } else {
+    document.getElementById('pwdError').style.display = 'block';
+  }
+}
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('pwdInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') login();
+});
+
+// ---- Render ----
+function renderTable() {
+  const keys = getAdminKeys();
+  const search = (document.getElementById('searchInput').value || '').toLowerCase();
+  let entries = Object.entries(keys);
+  if (search) {
+    entries = entries.filter(([k, v]) =>
+      k.toLowerCase().includes(search) || (v.note || '').toLowerCase().includes(search)
+    );
+  }
+  // Sort by createdAt descending
+  entries.sort((a, b) => (b[1].createdAt || '').localeCompare(a[1].createdAt || ''));
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyRow');
+  if (entries.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    updateStats(keys);
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = entries.map(([apiKey, data], i) => {
+    const safeKey = apiKey.replace(/"/g, '&quot;');
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:11px;">${i + 1}</td>
+      <td><span title="${safeKey}">${keyShortId(apiKey)}</span></td>
+      <td><input type="number" id="cred_${i}" value="${Math.floor(data.credits)}" min="0" style="width:100px;"></td>
+      <td><input type="text" id="note_${i}" value="${(data.note || '').replace(/"/g, '&quot;')}" style="width:100%;"></td>
+      <td>
+        <div class="actions">
+          <button class="btn primary" onclick="saveRow('${safeKey}', ${i})">保存</button>
+          <button class="btn" onclick="recharge('${safeKey}', ${i})">💰 充值</button>
+          <button class="btn danger" onclick="deleteKey('${safeKey}')">删除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  updateStats(keys);
+}
+
+function updateStats(keys) {
+  const entries = Object.entries(keys);
+  const total = entries.length;
+  const sum = entries.reduce((s, [, v]) => s + (v.credits || 0), 0);
+  document.getElementById('totalKeys').textContent = total;
+  document.getElementById('totalCredits').textContent = Math.floor(sum);
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="num">${total}</div><div class="label">API Key 总数</div></div>
+    <div class="stat-card"><div class="num">${Math.floor(sum)}</div><div class="label">总积分</div></div>
+    <div class="stat-card"><div class="num">${Math.floor(sum / 280)}</div><div class="label">可生 Banana Pro 次数</div></div>
+    <div class="stat-card"><div class="num">${Math.floor(sum / 230)}</div><div class="label">可生 GPT VIP 次数</div></div>
+  `;
+}
+
+// ---- Actions ----
+function addKey() {
+  const key = document.getElementById('newKeyInput').value.trim();
+  const credits = parseInt(document.getElementById('newCreditsInput').value) || 0;
+  const note = document.getElementById('newNoteInput').value.trim();
+  if (!key) { showMsg('请输入 API Key', 'error'); return; }
+  if (credits < 0) { showMsg('积分不能为负数', 'error'); return; }
+
+  const keys = getAdminKeys();
+  if (keys[key]) {
+    keys[key].credits += credits;
+    if (note) keys[key].note = note;
+    keys[key].updatedAt = new Date().toISOString();
+  } else {
+    keys[key] = { credits, note, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  }
+  saveAdminKeys(keys);
+  document.getElementById('newKeyInput').value = '';
+  document.getElementById('newCreditsInput').value = '';
+  document.getElementById('newNoteInput').value = '';
+  renderTable();
+  showMsg(`✅ 已添加 ${keyShortId(key)}（${credits} 积分）`, 'success');
+}
+
+function saveRow(apiKey, idx) {
+  const credits = parseInt(document.getElementById('cred_' + idx).value) || 0;
+  const note = document.getElementById('note_' + idx).value || '';
+  if (credits < 0) { showMsg('积分不能为负数', 'error'); return; }
+  const keys = getAdminKeys();
+  if (keys[apiKey]) {
+    keys[apiKey].credits = credits;
+    keys[apiKey].note = note;
+    keys[apiKey].updatedAt = new Date().toISOString();
+    saveAdminKeys(keys);
+    renderTable();
+    showMsg(`✅ 已保存 ${keyShortId(apiKey)}`, 'success');
+  }
+}
+
+function recharge(apiKey) {
+  const add = parseInt(prompt('输入充值积分数量：')) || 0;
+  if (add <= 0) return;
+  const current = getKeyCredits(apiKey);
+  const keys = getAdminKeys();
+  keys[apiKey].credits = current + add;
+  keys[apiKey].updatedAt = new Date().toISOString();
+  saveAdminKeys(keys);
+  renderTable();
+  showMsg(`💰 ${keyShortId(apiKey)} 充值 +${add} 积分（当前 ${Math.floor(current + add)}）`, 'success');
+}
+
+function deleteKey(apiKey) {
+  if (!confirm(`确定删除 Key ${keyShortId(apiKey)} 的所有积分记录？`)) return;
+  const keys = getAdminKeys();
+  delete keys[apiKey];
+  saveAdminKeys(keys);
+  renderTable();
+  showMsg(`🗑️ 已删除 ${keyShortId(apiKey)}`, 'success');
+}
+
+function clearAll() {
+  if (!confirm('确定清空所有 API Key 的积分记录？此操作不可恢复！')) return;
+  if (!confirm('再次确认：所有数据将被永久删除！')) return;
+  localStorage.removeItem(ADMIN_KEYS_KEY);
+  renderTable();
+  showMsg('🗑️ 已清空全部记录', 'success');
+}
+
+function exportData() {
+  const data = getAdminKeys();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `createmaster_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (typeof data !== 'object') throw new Error('格式错误');
+      // Merge: import data overwrites existing keys
+      const current = getAdminKeys();
+      for (const [key, val] of Object.entries(data)) {
+        current[key] = val;
+      }
+      saveAdminKeys(current);
+      renderTable();
+      showMsg(`📥 导入成功，共 ${Object.keys(data).length} 个 Key`, 'success');
+    } catch (err) {
+      showMsg('导入失败：文件格式不正确', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function showMsg(text, type) {
+  const box = document.getElementById('msgBox');
+  box.textContent = text;
+  box.className = 'msg ' + type;
+  clearTimeout(box._timer);
+  box._timer = setTimeout(() => { box.style.display = 'none'; }, 3000);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && loggedIn) {
+    document.getElementById('searchInput').focus();
+  }
+});
+</script>
+</body>
+</html>
