@@ -813,6 +813,58 @@
   }
 
   #pixelInfo { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ========== Admin Panel ========== */
+  .admin-gear {
+    position: fixed; bottom: 20px; right: 20px; z-index: 999;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg-card); border: 1px solid var(--card-border);
+    color: var(--text-muted); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; opacity: 0.4;
+  }
+  .admin-gear:hover { opacity: 1; color: var(--accent-1); border-color: var(--accent-1); }
+  .admin-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+  }
+  .admin-overlay.show { display: flex; }
+  .admin-modal {
+    background: var(--bg-card); border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg); padding: 28px; max-width: 700px;
+    width: 90vw; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .admin-modal h2 { font-size: 18px; margin-bottom: 16px; color: var(--text); }
+  .admin-modal .admin-close {
+    float: right; background: none; border: none; color: var(--text-muted);
+    font-size: 20px; cursor: pointer; padding: 0 4px;
+  }
+  .admin-modal .admin-close:hover { color: var(--danger); }
+  .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .admin-table th { text-align: left; color: var(--text-muted); padding: 8px 6px; border-bottom: 1px solid var(--card-border); font-weight: 600; }
+  .admin-table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); vertical-align: middle; }
+  .admin-table input, .admin-table select {
+    background: var(--input-bg); border: 1px solid var(--card-border);
+    border-radius: 4px; padding: 5px 8px; font-size: 12px; color: var(--text);
+    outline: none; width: 100%; box-sizing: border-box;
+  }
+  .admin-table input:focus { border-color: var(--accent-1); }
+  .admin-btn {
+    padding: 5px 12px; border-radius: 4px; border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: pointer;
+    font-size: 11px; transition: all 0.2s; white-space: nowrap;
+  }
+  .admin-btn:hover { border-color: var(--accent-1); color: var(--accent-1); }
+  .admin-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .admin-btn.primary { background: var(--accent-1); color: white; border-color: var(--accent-1); }
+  .admin-btn.primary:hover { background: var(--accent-2); }
+  .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .admin-add-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+  .admin-add-row input { flex: 1; min-width: 120px; }
+  .admin-empty { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 13px; }
+  .admin-search { margin-bottom: 12px; }
+  .admin-search input { width: 100%; padding: 8px 12px; }
 </style>
 </head>
 <body>
@@ -970,52 +1022,46 @@ const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
 
 const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
+const ADMIN_KEYS_KEY = 'cm_admin_keys';
+const ADMIN_SECRET = 'createmaster2024';
 
-// ============= 本地积分追踪（按 API Key 独立存储） =============
-// 使用完整 API Key 作为存储标识，确保每个 Key 积分独立
-function getCreditsKey(apiKey) {
-  return 'cmc_' + (apiKey || 'default');
+// ============= 管理员积分数据（按 API Key 独立管理） =============
+function getAdminKeys() {
+  try {
+    return JSON.parse(localStorage.getItem(ADMIN_KEYS_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
 }
 
-function getRelayKey(apiKey) {
-  return 'cmr_' + (apiKey || 'default');
+function saveAdminKeys(data) {
+  localStorage.setItem(ADMIN_KEYS_KEY, JSON.stringify(data));
 }
 
-function loadCredits(apiKey) {
-  const ck = getCreditsKey(apiKey);
-  const rk = getRelayKey(apiKey);
-  return {
-    display: parseFloat(localStorage.getItem(ck)) || 0,
-    lastRelay: parseFloat(localStorage.getItem(rk)) || 0
-  };
+function getKeyCredits(apiKey) {
+  const keys = getAdminKeys();
+  return keys[apiKey]?.credits ?? 0;
 }
 
-function saveCredits(apiKey, display, lastRelay) {
-  localStorage.setItem(getCreditsKey(apiKey), display);
-  localStorage.setItem(getRelayKey(apiKey), lastRelay);
+function setKeyCredits(apiKey, credits, note) {
+  const keys = getAdminKeys();
+  if (!keys[apiKey]) {
+    keys[apiKey] = { credits: 0, note: '', createdAt: new Date().toISOString() };
+  }
+  keys[apiKey].credits = Math.max(0, credits);
+  if (note !== undefined) keys[apiKey].note = note;
+  keys[apiKey].updatedAt = new Date().toISOString();
+  saveAdminKeys(keys);
 }
 
-// 当前使用的 API Key 对应的积分
+function deleteAdminKey(apiKey) {
+  const keys = getAdminKeys();
+  delete keys[apiKey];
+  saveAdminKeys(keys);
+}
+
+// 当前正在使用的 API Key
 let currentKey = '';
-let displayCredits = 0;
-let lastRelayCredits = 0;
-
-function switchToKey(apiKey) {
-  const newKey = apiKey || 'default';
-  // 如果还是同一个 Key，直接返回不重复保存/加载
-  if (currentKey === newKey) {
-    return;
-  }
-  // 保存当前 key 的积分
-  if (currentKey) {
-    saveCredits(currentKey, displayCredits, lastRelayCredits);
-  }
-  // 加载新 key 的积分
-  currentKey = newKey;
-  const data = loadCredits(currentKey);
-  displayCredits = data.display;
-  lastRelayCredits = data.lastRelay;
-}
 
 // 获取 Key 的简短标识用于显示
 function keyShortId(apiKey) {
@@ -1128,7 +1174,7 @@ const pixelInfo = $('#pixelInfo');
 
 // ============= Init =============
 apiKeyInput.value = state.apiKey;
-switchToKey(state.apiKey);
+currentKey = state.apiKey;
 updatePixelInfo();
 updateResolutionLock();
 
@@ -1239,70 +1285,28 @@ saveKeyBtn.addEventListener('click', () => {
   }
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
-  switchToKey(key);
+  currentKey = key;
   hideError();
   showSuccess('API Key 已保存');
   setTimeout(() => hideSuccess(), 2000);
 });
 
-queryBalanceBtn.addEventListener('click', async () => {
+queryBalanceBtn.addEventListener('click', () => {
   let key = apiKeyInput.value.trim();
-  // 输入为空时使用已保存的 Key（如果有）
   if (!key) {
     key = state.apiKey || '';
     if (!key) { showError('请先输入或保存 API Key'); return; }
   }
 
-  // 切换到当前输入的 Key（无论是否保存过）
-  switchToKey(key);
-  // 保存到 state 和 localStorage
+  currentKey = key;
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
 
-  queryBalanceBtn.disabled = true;
-  queryBalanceBtn.textContent = '查询中...';
-  hideError(); hideSuccess();
-
-  try {
-    const resp = await fetch('https://grsai.dakka.com.cn/client/openapi/getAPIKeyCredits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: key })
-    });
-    const data = await resp.json();
-
-    if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
-      const relayCredits = data.data.credits;
-
-      if (lastRelayCredits === 0 && displayCredits === 0) {
-        // 首次查询：初始化本地积分
-        displayCredits = relayCredits / 10;
-        lastRelayCredits = relayCredits;
-        saveCredits(currentKey, displayCredits, lastRelayCredits);
-      } else if (relayCredits > lastRelayCredits) {
-        // 续费充值：增量 ÷10 累加到本地积分
-        const increase = relayCredits - lastRelayCredits;
-        displayCredits += increase / 10;
-        lastRelayCredits = relayCredits;
-        saveCredits(currentKey, displayCredits, lastRelayCredits);
-      }
-      // 中转站积分减少（正常生图消耗）：不修改本地积分，只记录新值
-      lastRelayCredits = relayCredits;
-      saveCredits(currentKey, displayCredits, lastRelayCredits);
-
-      const remaining = Math.max(0, Math.floor(displayCredits));
-      const shortKey = keyShortId(key);
-      showSuccess(`剩余积分: ${remaining}（Key: ${shortKey}）`);
-    } else {
-      showError('查询失败: ' + (data.msg || '未知错误'));
-    }
-  } catch (err) {
-    showError('查询失败: ' + err.message);
-  } finally {
-    queryBalanceBtn.disabled = false;
-    queryBalanceBtn.textContent = '🔍 查询剩余';
-    setTimeout(() => { hideError(); hideSuccess(); }, 6000);
-  }
+  // 直接从管理员数据读取积分（不再调中转站 API）
+  const credits = getKeyCredits(key);
+  const remaining = Math.max(0, Math.floor(credits));
+  const shortKey = keyShortId(key);
+  showSuccess(`剩余积分: ${remaining}（Key: ${shortKey}）`);
 });
 
 // ============= Generate =============
@@ -1318,37 +1322,23 @@ async function generateImage() {
   }
   if (!state.prompt.trim()) { showError('请输入创意描述'); return; }
 
-  switchToKey(key);
+  currentKey = key;
   state.apiKey = key;
   localStorage.setItem(STORAGE_KEY_KEY, key);
 
   const activeModelBtn = modelGrid.querySelector('.model-btn.active');
   const displayCost = parseInt(activeModelBtn?.dataset?.cost || '280');
 
-  loadingText.textContent = '正在检查积分余额...';
-  try {
-    const creditResp = await fetch('https://grsai.dakka.com.cn/client/openapi/getAPIKeyCredits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: key })
-    });
-    const creditData = await creditResp.json();
-    if (creditData.code === 0 && creditData.data && typeof creditData.data.credits === 'number') {
-      const relayBalance = creditData.data.credits;
-      // 使用本地积分余额检查，而非中转站积分÷10
-      const currentBalance = Math.max(0, Math.floor(displayCredits));
-      if (currentBalance < displayCost) {
-        showError(`积分余额不足，请联系作者充值（当前 ${currentBalance} 分，需要 ${displayCost} 分）`);
-        state.isGenerating = false;
-        generateBtn.disabled = false;
-        generateBtn.textContent = '✨ 开始生成';
-        generateBtn.classList.remove('generating');
-        loadingIndicator.style.display = 'none';
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn('积分查询失败:', e.message);
+  // 检查管理员设定的积分余额
+  const currentBalance = Math.max(0, Math.floor(getKeyCredits(key)));
+  if (currentBalance < displayCost) {
+    showError(`积分余额不足，请联系作者充值（当前 ${currentBalance} 分，需要 ${displayCost} 分）`);
+    state.isGenerating = false;
+    generateBtn.disabled = false;
+    generateBtn.textContent = '✨ 开始生成';
+    generateBtn.classList.remove('generating');
+    loadingIndicator.style.display = 'none';
+    return;
   }
 
   state.isGenerating = true;
@@ -1461,15 +1451,20 @@ async function pollResult(taskId, key) {
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-// ============= 本地积分保存 =============
-function saveDisplayCredits() {
-  saveCredits(currentKey, displayCredits, lastRelayCredits);
-}
-
+// ============= 管理员积分扣除 =============
 function deductCredits(cost) {
-  displayCredits -= cost;
-  if (displayCredits < 0) displayCredits = 0;
-  saveDisplayCredits();
+  const key = currentKey || state.apiKey;
+  if (!key) return;
+  const current = getKeyCredits(key);
+  const newCredits = Math.max(0, current - cost);
+  const keys = getAdminKeys();
+  if (keys[key]) {
+    keys[key].credits = newCredits;
+    keys[key].updatedAt = new Date().toISOString();
+  } else {
+    keys[key] = { credits: newCredits, note: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  }
+  saveAdminKeys(keys);
 }
 
 // ============= Display Result =============
@@ -1614,6 +1609,176 @@ function hideSuccess() { successMsg.style.display = 'none'; }
 
 // ============= Init History =============
 renderHistory();
+
+// ============= 管理员面板 =============
+// 密码验证
+document.getElementById('adminPwdSubmit').addEventListener('click', () => {
+  const pwd = document.getElementById('adminPwdInput').value;
+  if (pwd === ADMIN_SECRET) {
+    document.getElementById('adminPwdOverlay').classList.remove('show');
+    document.getElementById('adminPwdError').style.display = 'none';
+    renderAdminTable();
+    document.getElementById('adminPanelOverlay').classList.add('show');
+  } else {
+    document.getElementById('adminPwdError').style.display = 'block';
+  }
+});
+document.getElementById('adminPwdInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('adminPwdSubmit').click();
+});
+
+// 齿轮入口
+document.getElementById('adminGearBtn').addEventListener('click', () => {
+  document.getElementById('adminPwdInput').value = '';
+  document.getElementById('adminPwdError').style.display = 'none';
+  document.getElementById('adminPwdOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('adminPwdInput').focus(), 100);
+});
+
+function closeAdminPanel() {
+  document.getElementById('adminPanelOverlay').classList.remove('show');
+}
+
+function renderAdminTable() {
+  const keys = getAdminKeys();
+  const search = (document.getElementById('adminSearchInput').value || '').toLowerCase();
+  let entries = Object.entries(keys);
+  if (search) {
+    entries = entries.filter(([k, v]) => k.toLowerCase().includes(search) || (v.note || '').toLowerCase().includes(search));
+  }
+  const tbody = document.getElementById('adminTableBody');
+  const empty = document.getElementById('adminEmpty');
+  if (entries.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = entries.map(([apiKey, data], i) => {
+    const safeKey = apiKey.replace(/"/g, '&quot;');
+    return `<tr>
+      <td><span title="${safeKey}">${keyShortId(apiKey)}</span></td>
+      <td><input type="number" id="cred_${i}" value="${Math.floor(data.credits)}" style="width:80px;"></td>
+      <td><input type="text" id="note_${i}" value="${(data.note || '').replace(/"/g, '&quot;')}" style="width:100%;"></td>
+      <td>
+        <div class="admin-actions">
+          <button class="admin-btn primary" onclick="adminSaveRow('${safeKey}', ${i})">保存</button>
+          <button class="admin-btn" onclick="adminRecharge('${safeKey}', ${i})">💰 充值</button>
+          <button class="admin-btn danger" onclick="adminDeleteKey('${safeKey}')">删除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function adminSaveRow(apiKey, idx) {
+  const credits = parseInt(document.getElementById('cred_' + idx).value) || 0;
+  const note = document.getElementById('note_' + idx).value || '';
+  if (credits < 0) return showError('积分不能为负数');
+  setKeyCredits(apiKey, credits, note);
+  renderAdminTable();
+  showSuccess('已保存: ' + keyShortId(apiKey));
+  setTimeout(hideSuccess, 2000);
+}
+
+function adminRecharge(apiKey, idx) {
+  const add = parseInt(prompt('输入充值积分数量：')) || 0;
+  if (add <= 0) return;
+  const current = getKeyCredits(apiKey);
+  setKeyCredits(apiKey, current + add);
+  document.getElementById('cred_' + idx).value = (current + add);
+  renderAdminTable();
+  showSuccess('充值成功！' + keyShortId(apiKey) + ': +' + add + ' 积分');
+  setTimeout(hideSuccess, 2000);
+}
+
+function adminDeleteKey(apiKey) {
+  if (!confirm('确定删除 Key ' + keyShortId(apiKey) + ' 的所有积分记录？')) return;
+  deleteAdminKey(apiKey);
+  renderAdminTable();
+  showSuccess('已删除: ' + keyShortId(apiKey));
+  setTimeout(hideSuccess, 2000);
+}
+
+function adminAddKey() {
+  const key = document.getElementById('adminNewKey').value.trim();
+  const credits = parseInt(document.getElementById('adminNewCredits').value) || 0;
+  const note = document.getElementById('adminNewNote').value.trim();
+  if (!key) { showError('请输入 API Key'); setTimeout(hideError, 2000); return; }
+  const keys = getAdminKeys();
+  if (keys[key]) {
+    // 已有 Key 则累加积分
+    keys[key].credits += credits;
+    keys[key].note = note || keys[key].note;
+    keys[key].updatedAt = new Date().toISOString();
+  } else {
+    keys[key] = { credits, note, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  }
+  saveAdminKeys(keys);
+  document.getElementById('adminNewKey').value = '';
+  document.getElementById('adminNewCredits').value = '';
+  document.getElementById('adminNewNote').value = '';
+  renderAdminTable();
+  showSuccess('已添加: ' + keyShortId(key) + ' (' + credits + ' 积分)');
+  setTimeout(hideSuccess, 2000);
+}
+
+// 键盘关闭
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('adminPwdOverlay').classList.remove('show');
+    document.getElementById('adminPanelOverlay').classList.remove('show');
+  }
+});
 </script>
+
+<!-- Admin Panel -->
+<button class="admin-gear" id="adminGearBtn" title="管理员入口">⚙️</button>
+
+<!-- 密码验证弹窗 -->
+<div class="admin-overlay" id="adminPwdOverlay">
+  <div class="admin-modal" style="max-width:400px;">
+    <h2>🔐 管理员验证</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">请输入管理员密码</p>
+    <input type="password" id="adminPwdInput" placeholder="输入密码..." style="width:100%;padding:10px 14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);outline:none;box-sizing:border-box;" autofocus>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="admin-btn" onclick="document.getElementById('adminPwdOverlay').classList.remove('show')">取消</button>
+      <button class="admin-btn primary" id="adminPwdSubmit">确认</button>
+    </div>
+    <div id="adminPwdError" style="color:var(--danger);font-size:12px;margin-top:8px;display:none;">密码错误</div>
+  </div>
+</div>
+
+<!-- 管理面板弹窗 -->
+<div class="admin-overlay" id="adminPanelOverlay">
+  <div class="admin-modal">
+    <button class="admin-close" onclick="closeAdminPanel()">✕</button>
+    <h2>⚙️ 管理员 · 积分充值中心</h2>
+    <div class="admin-add-row">
+      <input type="text" id="adminNewKey" placeholder="输入新 API Key...">
+      <input type="number" id="adminNewCredits" placeholder="初始积分" style="width:100px;">
+      <input type="text" id="adminNewNote" placeholder="备注（选填）" style="width:120px;">
+      <button class="admin-btn primary" onclick="adminAddKey()">➕ 添加</button>
+    </div>
+    <div class="admin-search">
+      <input type="text" id="adminSearchInput" placeholder="搜索 API Key..." oninput="renderAdminTable()">
+    </div>
+    <table class="admin-table">
+      <thead><tr>
+        <th style="width:30%;">API Key</th>
+        <th style="width:15%;">积分</th>
+        <th style="width:20%;">备注</th>
+        <th style="width:35%;">操作</th>
+      </tr></thead>
+      <tbody id="adminTableBody"></tbody>
+    </table>
+    <div class="admin-empty" id="adminEmpty">暂无记录</div>
+    <div style="margin-top:16px;display:flex;gap:8px;">
+      <span style="color:var(--text-muted);font-size:12px;">数据存储于浏览器本地</span>
+      <button class="admin-btn danger" onclick="if(confirm('确定清空所有 Key 的积分记录？')){localStorage.removeItem('cm_admin_keys');renderAdminTable();}">🗑️ 清空全部</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
