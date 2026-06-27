@@ -957,8 +957,7 @@
 // ============= Configuration =============
 const API_GENERATE = 'https://grsai.dakka.com.cn/v1/api/generate';
 const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
-const API_GPTVIP_GENERATE = 'https://api.aicoming.top/v1/api/generate';
-const API_GPTVIP_RESULT = 'https://api.aicoming.top/v1/api/result';
+const API_GPTVIP = 'https://api.aicoming.top/v1/images/generations';
 const GPTVIP_API_KEY = 'sk-471ea989010c47ac8a25814f2f252744b92e8f64623040e0';
 const BANANA_API_KEY = 'sk-c5addffcab314df497c59bd3b7cd459a';
 
@@ -1030,7 +1029,6 @@ let state = {
   pageSize: 12,
   isGenerating: false,
   previewIndex: -1,
-  lastIsGptVip: false,
 };
 
 // ============= DOM Refs =============
@@ -1178,7 +1176,6 @@ async function generateImage() {
   // 根据模型选择固定的 API Key
   const apiKey = isGptVip ? GPTVIP_API_KEY : BANANA_API_KEY;
   const activeModelBtn = modelGrid.querySelector('.model-btn.active');
-  const usedCost = parseInt(activeModelBtn?.dataset?.cost || '280');
   const usedModel = activeModelBtn?.querySelector('.model-name')?.textContent || '';
 
   state.isGenerating = true;
@@ -1190,56 +1187,74 @@ async function generateImage() {
   loadingIndicator.style.display = 'block';
   loadingText.textContent = '正在提交任务...';
 
-  const payload = { model: isGptVip ? 'gpt-image-2-4k' : state.model, prompt: state.prompt, replyType: 'json' };
-
-  if (isGptVip) {
-    const pixelDim = compute4KSize(state.aspectRatio);
-    payload.aspectRatio = pixelDim;
-  } else {
-    payload.aspectRatio = state.aspectRatio;
-    payload.imageSize = state.imageSize;
-  }
-
-  if (state.imageBase64List.length > 0) {
-    payload.images = state.imageBase64List;
-  }
-
-  // GPT VIP 使用独立 API
-  const genUrl = isGptVip ? API_GPTVIP_GENERATE : API_GENERATE;
-  const authKey = isGptVip ? GPTVIP_API_KEY : apiKey;
-
   try {
-    loadingText.textContent = '正在生成中，请稍候...';
-    const resp = await fetch(genUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authKey}` },
-      body: JSON.stringify(payload)
-    });
+    let imageUrl;
 
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+    if (isGptVip) {
+      // GPT Image-2 4K — OpenAI 兼容 API，同步返回
+      const pixelDim = compute4KSize(state.aspectRatio);
+      const gptPayload = {
+        model: 'gpt-image-2-4k',
+        prompt: state.prompt,
+        size: pixelDim,
+        quality: 'medium',
+        n: 1,
+        response_format: 'url'
+      };
 
-    if (data.status === 'succeeded' && data.results && data.results.length > 0) {
-      const imageUrl = data.results[0].url;
-      const usedCost = parseInt(activeModelBtn?.dataset?.cost || '280');
-      const usedModel = activeModelBtn?.querySelector('.model-name')?.textContent || '';
-      showResult(imageUrl);
-      showSuccess(`✅ 生图完成！（${usedModel}）`);
-      setTimeout(() => hideSuccess(), 5000);
-      addToHistory(imageUrl);
-    } else if (data.status === 'running' || data.status === 'queued') {
-      // 记录模型信息，供 pollResult 使用
-      state.lastUsedCost = usedCost;
-      state.lastUsedModel = usedModel;
-      state.lastIsGptVip = isGptVip;
-      await pollResult(data.id, authKey);
-    } else if (data.status === 'violation') {
-      showError('内容违规，请修改提示词后重试');
-    } else if (data.status === 'failed') {
-      showError(data.error || '生成失败');
+      loadingText.textContent = '正在生成中，请稍候...';
+      const resp = await fetch(API_GPTVIP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify(gptPayload)
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
+      if (!data.data || !data.data[0]) throw new Error('返回数据异常');
+      imageUrl = data.data[0].url;
+
     } else {
-      showError('未知状态：' + (data.status || '无响应'));
+      // Banana Pro — 原有异步 API
+      const payload = {
+        model: state.model,
+        prompt: state.prompt,
+        aspectRatio: state.aspectRatio,
+        imageSize: state.imageSize,
+        replyType: 'json'
+      };
+      if (state.imageBase64List.length > 0) {
+        payload.images = state.imageBase64List;
+      }
+
+      loadingText.textContent = '正在生成中，请稍候...';
+      const resp = await fetch(API_GENERATE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+
+      if (data.status === 'succeeded' && data.results && data.results.length > 0) {
+        imageUrl = data.results[0].url;
+      } else if (data.status === 'running' || data.status === 'queued') {
+        state.lastUsedModel = usedModel;
+        await pollResult(data.id, apiKey);
+        return;
+      } else if (data.status === 'violation') {
+        throw new Error('内容违规，请修改提示词后重试');
+      } else if (data.status === 'failed') {
+        throw new Error(data.error || '生成失败');
+      } else {
+        throw new Error('未知状态：' + (data.status || '无响应'));
+      }
     }
+
+    // 显示结果
+    showResult(imageUrl);
+    showSuccess(`✅ 生图完成！（${usedModel}）`);
+    setTimeout(() => hideSuccess(), 5000);
+    addToHistory(imageUrl);
   } catch (err) {
     showError('生成失败：' + err.message);
   } finally {
@@ -1256,8 +1271,6 @@ async function pollResult(taskId, authKey) {
   const interval = 3000;
   let attempts = 0;
   loadingText.textContent = '任务已提交，正在等待生成结果...';
-  const isGptVip = state.lastIsGptVip;
-  const resultUrl = isGptVip ? API_GPTVIP_RESULT : API_RESULT;
 
   while (attempts < maxAttempts) {
     await sleep(interval);
@@ -1265,14 +1278,13 @@ async function pollResult(taskId, authKey) {
     loadingText.textContent = `正在生成中... (${attempts * 3}s)`;
 
     try {
-      const resp = await fetch(`${resultUrl}?id=${encodeURIComponent(taskId)}`, {
+      const resp = await fetch(`${API_RESULT}?id=${encodeURIComponent(taskId)}`, {
         headers: { 'Authorization': `Bearer ${authKey}` }
       });
       const data = await resp.json();
 
       if (data.status === 'succeeded' && data.results && data.results.length > 0) {
         const imageUrl = data.results[0].url;
-        const cost = state.lastUsedCost || 0;
         const modelName = state.lastUsedModel || '';
         showResult(imageUrl);
         addToHistory(imageUrl);
