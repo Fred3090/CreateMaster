@@ -813,9 +813,6 @@
   }
 
   #pixelInfo { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
-  .admin-link { font-size: 12px; color: var(--text-muted); text-decoration: none; display: inline-block; transition: color 0.2s; cursor: pointer; }
-  .admin-link:hover { color: var(--accent-1); }
 </style>
 </head>
 <body>
@@ -832,8 +829,7 @@
         </div>
       </div>
       <div class="header-info">
-        微信：<strong>qingchuan7818</strong><br>
-        <a href="https://fred3090.github.io/CreateMaster/admin.html" class="admin-link" target="_blank">⚙️ 管理</a>
+        微信：<strong>qingchuan7818</strong>
       </div>
     </div>
 
@@ -902,16 +898,6 @@
       </div>
     </div>
 
-    <!-- API Key -->
-    <div class="section-group">
-      <div class="key-row">
-        <span class="section-label">🔑 API Key</span>
-        <input type="password" class="key-input" id="apiKeyInput" placeholder="输入您的 API Key..." value="sk-c5addffcab314df497c59bd3b7cd459a">
-        <button class="btn" id="saveKeyBtn">💾 保存</button>
-        <button class="btn" id="queryBalanceBtn">🔍 查询剩余</button>
-      </div>
-    </div>
-
     <!-- Generate Button -->
     <div class="generate-row">
       <button class="btn-generate" id="generateBtn">✨ 开始生成</button>
@@ -974,56 +960,11 @@ const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
 const API_GPTVIP_GENERATE = 'https://api.aicoming.top/v1/api/generate';
 const API_GPTVIP_RESULT = 'https://api.aicoming.top/v1/api/result';
 const GPTVIP_API_KEY = 'sk-471ea989010c47ac8a25814f2f252744b92e8f64623040e0';
+const BANANA_API_KEY = 'sk-c5addffcab314df497c59bd3b7cd459a';
 
-const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
-const ADMIN_KEYS_KEY = 'cm_admin_keys';
 
 // ============= 管理员积分数据（按 API Key 独立管理） =============
-function getAdminKeys() {
-  try {
-    return JSON.parse(localStorage.getItem(ADMIN_KEYS_KEY)) || {};
-  } catch (e) {
-    return {};
-  }
-}
-
-function saveAdminKeys(data) {
-  localStorage.setItem(ADMIN_KEYS_KEY, JSON.stringify(data));
-}
-
-function getKeyCredits(apiKey) {
-  const keys = getAdminKeys();
-  return keys[apiKey]?.credits ?? 0;
-}
-
-function setKeyCredits(apiKey, credits, note) {
-  const keys = getAdminKeys();
-  if (!keys[apiKey]) {
-    keys[apiKey] = { credits: 0, note: '', createdAt: new Date().toISOString() };
-  }
-  keys[apiKey].credits = Math.max(0, credits);
-  if (note !== undefined) keys[apiKey].note = note;
-  keys[apiKey].updatedAt = new Date().toISOString();
-  saveAdminKeys(keys);
-}
-
-function deleteAdminKey(apiKey) {
-  const keys = getAdminKeys();
-  delete keys[apiKey];
-  saveAdminKeys(keys);
-}
-
-// 当前正在使用的 API Key
-let currentKey = '';
-
-// 获取 Key 的简短标识用于显示
-function keyShortId(apiKey) {
-  if (!apiKey) return '空';
-  if (apiKey.length <= 10) return apiKey;
-  return apiKey.slice(0, 8) + '...' + apiKey.slice(-4);
-}
-
 // ============= 4K Size Calculation =============
 function compute4KSize(ratioStr) {
   if (!ratioStr || typeof ratioStr !== 'string' || !ratioStr.includes(':')) return '3840x3840';
@@ -1083,7 +1024,7 @@ let state = {
   prompt: '',
   images: [],
   imageBase64List: [],
-  apiKey: localStorage.getItem(STORAGE_KEY_KEY) || 'sk-c5addffcab314df497c59bd3b7cd459a',
+  apiKey: BANANA_API_KEY,
   history: JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]'),
   currentPage: 1,
   pageSize: 12,
@@ -1100,7 +1041,6 @@ const modelGrid = $('#modelGrid');
 const ratioGrid = $('#ratioGrid');
 const resolutionGrid = $('#resolutionGrid');
 const promptInput = $('#promptInput');
-const apiKeyInput = $('#apiKeyInput');
 const imageUpload = $('#imageUpload');
 const uploadPreview = $('#uploadPreview');
 const generateBtn = $('#generateBtn');
@@ -1123,13 +1063,9 @@ const previewClose = $('#previewClose');
 const prevImageBtn = $('#prevImageBtn');
 const nextImageBtn = $('#nextImageBtn');
 const downloadPreviewBtn = $('#downloadPreviewBtn');
-const saveKeyBtn = $('#saveKeyBtn');
-const queryBalanceBtn = $('#queryBalanceBtn');
 const pixelInfo = $('#pixelInfo');
 
 // ============= Init =============
-apiKeyInput.value = state.apiKey;
-currentKey = state.apiKey;
 updatePixelInfo();
 updateResolutionLock();
 
@@ -1231,70 +1167,19 @@ uploadPreview.addEventListener('click', (e) => {
   renderUploadPreview();
 });
 
-// ============= API Key =============
-saveKeyBtn.addEventListener('click', () => {
-  const key = apiKeyInput.value.trim();
-  if (!key) {
-    showError('请输入 API Key');
-    return;
-  }
-  state.apiKey = key;
-  localStorage.setItem(STORAGE_KEY_KEY, key);
-  currentKey = key;
-  hideError();
-  showSuccess('API Key 已保存');
-  setTimeout(() => hideSuccess(), 2000);
-});
-
-queryBalanceBtn.addEventListener('click', () => {
-  let key = apiKeyInput.value.trim();
-  if (!key) {
-    key = state.apiKey || '';
-    if (!key) { showError('请先输入或保存 API Key'); return; }
-  }
-
-  currentKey = key;
-  state.apiKey = key;
-  localStorage.setItem(STORAGE_KEY_KEY, key);
-
-  // 直接从管理员数据读取积分（不再调中转站 API）
-  const credits = getKeyCredits(key);
-  const remaining = Math.max(0, Math.floor(credits));
-  const shortKey = keyShortId(key);
-  showSuccess(`剩余积分: ${remaining}（Key: ${shortKey}）`);
-});
-
 // ============= Generate =============
 generateBtn.addEventListener('click', generateImage);
 
 async function generateImage() {
   if (state.isGenerating) return;
-
-  let key = apiKeyInput.value.trim();
-  if (!key) {
-    key = state.apiKey || '';
-    if (!key) { showError('请先输入或保存 API Key'); return; }
-  }
   if (!state.prompt.trim()) { showError('请输入创意描述'); return; }
 
-  currentKey = key;
-  state.apiKey = key;
-  localStorage.setItem(STORAGE_KEY_KEY, key);
-
+  const isGptVip = state.model === 'gpt-image-2-vip';
+  // 根据模型选择固定的 API Key
+  const apiKey = isGptVip ? GPTVIP_API_KEY : BANANA_API_KEY;
   const activeModelBtn = modelGrid.querySelector('.model-btn.active');
-  const displayCost = parseInt(activeModelBtn?.dataset?.cost || '280');
-
-  // 检查管理员设定的积分余额
-  const currentBalance = Math.max(0, Math.floor(getKeyCredits(key)));
-  if (currentBalance < displayCost) {
-    showError(`积分余额不足，请联系作者充值（当前 ${currentBalance} 分，需要 ${displayCost} 分）`);
-    state.isGenerating = false;
-    generateBtn.disabled = false;
-    generateBtn.textContent = '✨ 开始生成';
-    generateBtn.classList.remove('generating');
-    loadingIndicator.style.display = 'none';
-    return;
-  }
+  const usedCost = parseInt(activeModelBtn?.dataset?.cost || '280');
+  const usedModel = activeModelBtn?.querySelector('.model-name')?.textContent || '';
 
   state.isGenerating = true;
   generateBtn.disabled = true;
@@ -1305,7 +1190,6 @@ async function generateImage() {
   loadingIndicator.style.display = 'block';
   loadingText.textContent = '正在提交任务...';
 
-  const isGptVip = state.model === 'gpt-image-2-vip';
   const payload = { model: isGptVip ? 'gpt-image-2-vip' : state.model, prompt: state.prompt, replyType: 'json' };
 
   if (isGptVip) {
@@ -1322,7 +1206,7 @@ async function generateImage() {
 
   // GPT VIP 使用独立 API
   const genUrl = isGptVip ? API_GPTVIP_GENERATE : API_GENERATE;
-  const authKey = isGptVip ? GPTVIP_API_KEY : key;
+  const authKey = isGptVip ? GPTVIP_API_KEY : apiKey;
 
   try {
     loadingText.textContent = '正在生成中，请稍候...';
@@ -1339,9 +1223,8 @@ async function generateImage() {
       const imageUrl = data.results[0].url;
       const usedCost = parseInt(activeModelBtn?.dataset?.cost || '280');
       const usedModel = activeModelBtn?.querySelector('.model-name')?.textContent || '';
-      deductCredits(usedCost);
       showResult(imageUrl);
-      showSuccess(`✅ 生图完成！本次消耗 ${usedCost} 积分（${usedModel}）`);
+      showSuccess(`✅ 生图完成！（${usedModel}）`);
       setTimeout(() => hideSuccess(), 5000);
       addToHistory(imageUrl);
     } else if (data.status === 'running' || data.status === 'queued') {
@@ -1391,10 +1274,9 @@ async function pollResult(taskId, authKey) {
         const imageUrl = data.results[0].url;
         const cost = state.lastUsedCost || 0;
         const modelName = state.lastUsedModel || '';
-        deductCredits(cost);
         showResult(imageUrl);
         addToHistory(imageUrl);
-        showSuccess(`✅ 生图完成！本次消耗 ${cost} 积分（${modelName}）`);
+        showSuccess(`✅ 生图完成！（${modelName}）`);
         setTimeout(() => hideSuccess(), 5000);
         return;
       } else if (data.status === 'violation') {
@@ -1412,22 +1294,6 @@ async function pollResult(taskId, authKey) {
 }
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
-// ============= 管理员积分扣除 =============
-function deductCredits(cost) {
-  const key = currentKey || state.apiKey;
-  if (!key) return;
-  const current = getKeyCredits(key);
-  const newCredits = Math.max(0, current - cost);
-  const keys = getAdminKeys();
-  if (keys[key]) {
-    keys[key].credits = newCredits;
-    keys[key].updatedAt = new Date().toISOString();
-  } else {
-    keys[key] = { credits: newCredits, note: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-  }
-  saveAdminKeys(keys);
-}
 
 // ============= Display Result =============
 function showResult(url) {
