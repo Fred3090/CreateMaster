@@ -957,8 +957,8 @@
 // ============= Configuration =============
 const API_GENERATE = 'https://grsai.dakka.com.cn/v1/api/generate';
 const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
-const API_GPTVIP = 'https://api.aicoming.top/v1/images/generations';
-const GPTVIP_API_KEY = 'sk-471ea989010c47ac8a25814f2f252744b92e8f64623040e0';
+const API_GPTVIP = 'https://api.aicoming.top/v1/chat/completions';
+const GPTVIP_API_KEY = 'sk-ee0fac56a21a894bf939e3666d89896de05056cb8b5d7ec4';
 const BANANA_API_KEY = 'sk-c5addffcab314df497c59bd3b7cd459a';
 
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
@@ -1191,15 +1191,10 @@ async function generateImage() {
     let imageUrl;
 
     if (isGptVip) {
-      // GPT Image-2 4K — OpenAI 兼容 API，同步返回
-      const pixelDim = compute4KSize(state.aspectRatio);
+      // GPT Image-2 4K — 使用 /v1/chat/completions 端点（Chat Completions 格式）
       const gptPayload = {
         model: 'gpt-image-2-4k',
-        prompt: state.prompt,
-        size: pixelDim,
-        quality: 'medium',
-        n: 1,
-        response_format: 'url'
+        messages: [{ role: 'user', content: state.prompt }]
       };
 
       loadingText.textContent = '正在生成中，请稍候...';
@@ -1210,8 +1205,33 @@ async function generateImage() {
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
-      if (!data.data || !data.data[0]) throw new Error('返回数据异常');
-      imageUrl = data.data[0].url;
+
+      // Chat Completions 格式返回：choices[0].message.content 可能包含图片 URL
+      // 或 choices[0].message 内容中包含生成的图像信息
+      if (data.choices && data.choices.length > 0) {
+        const msgContent = data.choices[0].message?.content;
+        // 如果 content 是 URL 字符串，直接使用
+        if (msgContent && (msgContent.startsWith('http') || msgContent.startsWith('//'))) {
+          imageUrl = msgContent;
+        }
+        // 如果 content 中包含 URL
+        else if (msgContent && msgContent.match(/https?:\/\/[^\s"']+\.(png|jpg|jpeg|webp)/i)) {
+          const urlMatch = msgContent.match(/(https?:\/\/[^\s"']+\.(png|jpg|jpeg|webp))/i);
+          imageUrl = urlMatch ? urlMatch[1] : null;
+        }
+        // 尝试从 data 字段获取（某些实现可能在 data 中返回）
+        else if (data.data && data.data.length > 0) {
+          imageUrl = data.data[0]?.url || data.data[0];
+        }
+        // content 本身就是结果
+        else if (msgContent) {
+          imageUrl = msgContent;
+        }
+      } else if (data.data && data.data.length > 0) {
+        imageUrl = data.data[0]?.url || data.data[0];
+      }
+
+      if (!imageUrl) throw new Error('未能解析生成结果，请检查 API 返回：' + JSON.stringify(data).slice(0, 200));
 
     } else {
       // Banana Pro — 原有异步 API
