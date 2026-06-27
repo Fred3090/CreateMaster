@@ -971,6 +971,9 @@
 // ============= Configuration =============
 const API_GENERATE = 'https://grsai.dakka.com.cn/v1/api/generate';
 const API_RESULT = 'https://grsai.dakka.com.cn/v1/api/result';
+const API_GPTVIP_GENERATE = 'https://api.aicoming.top/v1/api/generate';
+const API_GPTVIP_RESULT = 'https://api.aicoming.top/v1/api/result';
+const GPTVIP_API_KEY = 'sk-471ea989010c47ac8a25814f2f252744b92e8f64623040e0';
 
 const STORAGE_KEY_KEY = 'nanobanana_api_key';
 const STORAGE_KEY_HISTORY = 'nanobanana_history';
@@ -1086,6 +1089,7 @@ let state = {
   pageSize: 12,
   isGenerating: false,
   previewIndex: -1,
+  lastIsGptVip: false,
 };
 
 // ============= DOM Refs =============
@@ -1302,7 +1306,7 @@ async function generateImage() {
   loadingText.textContent = '正在提交任务...';
 
   const isGptVip = state.model === 'gpt-image-2-vip';
-  const payload = { model: state.model, prompt: state.prompt, replyType: 'json' };
+  const payload = { model: isGptVip ? 'gpt-image-2-vip' : state.model, prompt: state.prompt, replyType: 'json' };
 
   if (isGptVip) {
     const pixelDim = compute4KSize(state.aspectRatio);
@@ -1316,11 +1320,15 @@ async function generateImage() {
     payload.images = state.imageBase64List;
   }
 
+  // GPT VIP 使用独立 API
+  const genUrl = isGptVip ? API_GPTVIP_GENERATE : API_GENERATE;
+  const authKey = isGptVip ? GPTVIP_API_KEY : key;
+
   try {
     loadingText.textContent = '正在生成中，请稍候...';
-    const resp = await fetch(API_GENERATE, {
+    const resp = await fetch(genUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authKey}` },
       body: JSON.stringify(payload)
     });
 
@@ -1340,7 +1348,8 @@ async function generateImage() {
       // 记录模型信息，供 pollResult 使用
       state.lastUsedCost = usedCost;
       state.lastUsedModel = usedModel;
-      await pollResult(data.id, key);
+      state.lastIsGptVip = isGptVip;
+      await pollResult(data.id, authKey);
     } else if (data.status === 'violation') {
       showError('内容违规，请修改提示词后重试');
     } else if (data.status === 'failed') {
@@ -1359,11 +1368,13 @@ async function generateImage() {
   }
 }
 
-async function pollResult(taskId, key) {
+async function pollResult(taskId, authKey) {
   const maxAttempts = 60;
   const interval = 3000;
   let attempts = 0;
   loadingText.textContent = '任务已提交，正在等待生成结果...';
+  const isGptVip = state.lastIsGptVip;
+  const resultUrl = isGptVip ? API_GPTVIP_RESULT : API_RESULT;
 
   while (attempts < maxAttempts) {
     await sleep(interval);
@@ -1371,8 +1382,8 @@ async function pollResult(taskId, key) {
     loadingText.textContent = `正在生成中... (${attempts * 3}s)`;
 
     try {
-      const resp = await fetch(`${API_RESULT}?id=${encodeURIComponent(taskId)}`, {
-        headers: { 'Authorization': `Bearer ${key}` }
+      const resp = await fetch(`${resultUrl}?id=${encodeURIComponent(taskId)}`, {
+        headers: { 'Authorization': `Bearer ${authKey}` }
       });
       const data = await resp.json();
 
